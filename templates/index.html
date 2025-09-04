@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}DK 동국홀딩스 인사평가 시스템 - 메인{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>DK 동국홀딩스 인사평가 시스템
+                </h2>
+                <p class="mb-0 mt-2" style="color: rgba(255,255,255,0.9);">2025년도 인사평가를 위한 통합 관리 시스템</p>
+            </div>
+            <div class="card-body text-center">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 evaluation-type-card">
+                            <div class="card-body">
+                                <i class="fas fa-user-tie fa-3x mb-3" style="color: var(--dk-blue);"></i>
+                                <h5 class="card-title fw-bold">피평가자</h5>
+                                <a href="{{ url_for('login') }}?type=피평가자" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>로그인
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 evaluation-type-card">
+                            <div class="card-body">
+                                <i class="fas fa-user-tie fa-3x mb-3" style="color: var(--dk-blue);"></i>
+                                <h5 class="card-title fw-bold">평가자(팀장)</h5>
+                                <a href="{{ url_for('login') }}?type=평가자(팀장)" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>로그인
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 evaluation-type-card">
+                            <div class="card-body">
+                                <i class="fas fa-user-tie fa-3x mb-3" style="color: var(--dk-blue);"></i>
+                                <h5 class="card-title fw-bold">평가자(임원)</h5>
+                                <a href="{{ url_for('login') }}?type=평가자(임원)" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>로그인
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 evaluation-type-card">
+                            <div class="card-body">
+                                <i class="fas fa-user-cog fa-3x mb-3" style="color: var(--dk-blue);"></i>
+                                <h5 class="card-title fw-bold">관리자(인사담당자)</h5>
+                                <a href="{{ url_for('login') }}?type=관리자(인사담당자)" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt me-1"></i>로그인
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

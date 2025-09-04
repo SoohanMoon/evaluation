@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}평가 데이터 조회{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2 class="fw-bold text-primary">
+        <i class="fas fa-chart-bar me-2"></i>평가 데이터 조회
+    </h2>
+    <p class="text-muted">전체 평가 결과를 확인하세요</p>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-table me-2"></i>평가 결과 목록</h5>
+    </div>
+    <div class="card-body">
+        {% if evaluations %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>평가자ID</th>
+                        <th>피평가자ID</th>
+                        <th>평가유형</th>
+                        <th>점수</th>
+                        <th>평가일시</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evaluation in evaluations %}
+                    <tr>
+                        <td>{{ evaluation.evaluator_id }}</td>
+                        <td>{{ evaluation.employee_id }}</td>
+                        <td>
+                            {% if evaluation.evaluation_type == 'relative' %}
+                                <span class="badge bg-primary">상대평가</span>
+                            {% else %}
+                                <span class="badge bg-success">절대평가</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if evaluation.evaluation_type == 'relative' %}
+                                {{ evaluation.relative_score }}
+                            {% else %}
+                                {{ evaluation.total_score }}
+                            {% endif %}
+                        </td>
+                        <td>{{ evaluation.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+            <p class="text-muted">아직 평가 데이터가 없습니다.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>대시보드로 돌아가기
+    </a>
+</div>
+{% endblock %} 

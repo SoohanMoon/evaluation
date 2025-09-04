@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}피평가자 대시보드 - DK 동국홀딩스{% endblock %}
+
+{% block content %}
+<div class="user-info">
+    <div class="row">
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>이름</h6>
+            <p class="mb-0 fw-bold">{{ user_data.name }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>소속</h6>
+            <p class="mb-0 fw-bold">{{ user_data.team }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직위</h6>
+            <p class="mb-0 fw-bold">{{ user_data.position }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직급</h6>
+            <p class="mb-0 fw-bold">{{ user_data.grade }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>실적 작성
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    <i class="fas fa-info-circle me-1"></i>
+                    본인의 실적을 작성하고 최종 등록할 수 있습니다. 등록 후에는 변경이 불가능합니다.
+                </p>
+                <a href="{{ url_for('performance') }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>실적 작성하기
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h6 class="fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>중요 안내</h6>
+            <ul class="mb-0">
+                <li>실적 작성 후 최종 등록하면 변경이 불가능합니다.</li>
+                <li>평가 기간 중에는 실적 작성이 제한될 수 있습니다.</li>
+                <li>문의사항이 있으시면 인사기획팀에 연락해주세요.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 

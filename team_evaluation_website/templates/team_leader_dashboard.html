@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팀장 대시보드 - 인사평가 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #28a745 0%, #20c997 100%);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .evaluation-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .score-input {
+            width: 60px;
+            text-align: center;
+        }
+        .role-definition {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 사이드바 -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar text-white p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-users-cog fa-3x mb-3"></i>
+                        <h5>팀장 평가</h5>
+                    </div>
+                    <hr class="bg-white">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#employee-evaluation">
+                                <i class="fas fa-user me-2"></i>팀원 평가(사원)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#manager-evaluation">
+                                <i class="fas fa-user-tie me-2"></i>팀원 평가(대리 이상)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#general-evaluation">
+                                <i class="fas fa-user-friends me-2"></i>팀원 평가(일반직)
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="bg-white">
+                    <div class="text-center">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-2"></i>로그아웃
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 메인 콘텐츠 -->
+            <div class="col-md-9 col-lg-10">
+                <div class="main-content p-4">
+                    <!-- 헤더 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-users-cog me-2"></i>팀장 평가 대시보드</h2>
+                        <span class="badge bg-success fs-6">{{ user_data.iloc[12] }}님 환영합니다</span>
+                    </div>
+
+                    <!-- 직급별 역할 정의 -->
+                    <div class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-info-circle me-2"></i>직급별 역할 정의</h4>
+                            <div class="row">
+                                {% for _, role in jikkeup.iterrows() %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="role-definition">
+                                        <h6 class="fw-bold">{{ role.iloc[0] }} ({{ role.iloc[1] }})</h6>
+                                        <p class="mb-1">{{ role.iloc[2] }}</p>
+                                        <small class="text-muted">{{ role.iloc[3] }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 팀원 평가(사원) -->
+                    <div id="employee-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-user me-2"></i>팀원 평가(사원) - 절대평가</h4>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                직급 체류기간 평균 점수가 60점 미만이면 대리 승진 제외됩니다.
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>평가 항목</th>
+                                            <th>평가 기준</th>
+                                            <th>S (10점)</th>
+                                            <th>A (8점)</th>
+                                            <th>B (6점)</th>
+                                            <th>C (4점)</th>
+                                            <th>D (2점)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td rowspan="3" class="align-middle">근무태도</td>
+                                            <td>근무시간을 준수하고 업무에 집중한다</td>
+                                            <td><input type="radio" name="q1" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q1" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q1" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q1" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q1" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>직장 내 예의범절을 준수한다</td>
+                                            <td><input type="radio" name="q2" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q2" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q2" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q2" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q2" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>맡은 업무에 대해 책임감을 갖고 근무한다</td>
+                                            <td><input type="radio" name="q3" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q3" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q3" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q3" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q3" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="3" class="align-middle">팔로워십</td>
+                                            <td>주어진 역할에 대해 적극 수용한다</td>
+                                            <td><input type="radio" name="q4" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q4" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q4" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q4" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q4" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>팀의 목표 달성을 위해 적극적으로 지원하고 협력한다</td>
+                                            <td><input type="radio" name="q5" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q5" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q5" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q5" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q5" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>조직의 가치와 문화를 이해하고 적응한다</td>
+                                            <td><input type="radio" name="q6" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q6" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q6" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q6" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q6" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="2" class="align-middle">업무수행 능력</td>
+                                            <td>업무 내용을 이해하고 정확하게 수행한다</td>
+                                            <td><input type="radio" name="q7" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q7" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q7" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q7" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q7" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>업무를 기한내 완료한다</td>
+                                            <td><input type="radio" name="q8" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q8" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q8" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q8" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q8" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td rowspan="2" class="align-middle">성장 마인드셋</td>
+                                            <td>새로운 지식을 습득하고 활용한다</td>
+                                            <td><input type="radio" name="q9" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q9" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q9" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q9" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q9" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr>
+                                            <td>피드백을 수용하고 자기계발을 지속한다</td>
+                                            <td><input type="radio" name="q10" value="10" class="form-check-input"></td>
+                                            <td><input type="radio" name="q10" value="8" class="form-check-input"></td>
+                                            <td><input type="radio" name="q10" value="6" class="form-check-input"></td>
+                                            <td><input type="radio" name="q10" value="4" class="form-check-input"></td>
+                                            <td><input type="radio" name="q10" value="2" class="form-check-input"></td>
+                                        </tr>
+                                        <tr class="table-info">
+                                            <td colspan="2" class="fw-bold">총점</td>
+                                            <td colspan="5">
+                                                <input type="text" class="form-control score-input" id="totalScore" readonly>
+                                                <small class="text-muted">점/100점</small>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="qualitativeEvaluation" class="form-label fw-bold">정성평가</label>
+                                <textarea class="form-control" id="qualitativeEvaluation" rows="4" 
+                                          placeholder="정성적인 평가 의견을 작성해주세요..."></textarea>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="calculateScore()">
+                                <i class="fas fa-calculator me-2"></i>점수 계산
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 팀원 평가(대리 이상) -->
+                    <div id="manager-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-user-tie me-2"></i>팀원 평가(대리 이상) - 상대평가</h4>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                직전 평가 대비 15점 이상 또는 -15점 이하 부여시 소명서 작성이 필요합니다.
+                                <br><small>(소명서 양식은 인사기획팀 문수한 대리에게 요청)</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teamMembers" class="form-label fw-bold">평가 대상자 선택</label>
+                                <select class="form-select" id="teamMembers">
+                                    <option value="">평가 대상자를 선택하세요</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="relativeScore" class="form-label fw-bold">상대평가 점수</label>
+                                <input type="number" class="form-control" id="relativeScore" min="75" max="95" 
+                                       placeholder="75-95점 범위 내에서 입력">
+                                <small class="text-muted">인당 포인트 한도: 최대 95점, 최소 75점</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="managerEvaluationOpinion" class="form-label fw-bold">평가 의견</label>
+                                <textarea class="form-control" id="managerEvaluationOpinion" rows="4" 
+                                          placeholder="평가 의견을 작성해주세요..."></textarea>
+                            </div>
+                            
+                            <button type="button" class="btn btn-success" onclick="saveManagerEvaluation()">
+                                <i class="fas fa-save me-2"></i>평가 저장
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 팀원 평가(일반직) -->
+                    <div id="general-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-user-friends me-2"></i>팀원 평가(일반직)</h4>
+                            
+                            <div class="mb-3">
+                                <label for="generalTeamMembers" class="form-label fw-bold">평가 대상자 선택</label>
+                                <select class="form-select" id="generalTeamMembers">
+                                    <option value="">평가 대상자를 선택하세요</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="generalEvaluationOpinion" class="form-label fw-bold">평가 의견</label>
+                                <textarea class="form-control" id="generalEvaluationOpinion" rows="4" 
+                                          placeholder="평가 의견을 작성해주세요..."></textarea>
+                            </div>
+                            
+                            <button type="button" class="btn btn-info" onclick="saveGeneralEvaluation()">
+                                <i class="fas fa-save me-2"></i>평가 저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 소명서 안내 모달 -->
+    <div class="modal fade" id="explanationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>소명서 작성 필요
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>직전 평가 대비 15점 이상 또는 -15점 이하 부여시 소명서 작성이 필요합니다.</p>
+                    <p><strong>소명서 양식은 인사기획팀 문수한 대리에게 요청</strong>하시기 바랍니다.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 점수 계산 함수
+        function calculateScore() {
+            let totalScore = 0;
+            
+            // 모든 라디오 버튼에서 선택된 값들의 합계 계산
+            for (let i = 1; i <= 10; i++) {
+                const selectedRadio = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selectedRadio) {
+                    totalScore += parseInt(selectedRadio.value);
+                }
+            }
+            
+            document.getElementById('totalScore').value = totalScore;
+            
+            if (totalScore > 0) {
+                showAlert(`총점이 계산되었습니다: ${totalScore}점`, 'success');
+            } else {
+                showAlert('모든 항목을 평가해주세요.', 'warning');
+            }
+        }
+
+        // 팀원 평가 저장
+        function saveManagerEvaluation() {
+            const member = document.getElementById('teamMembers').value;
+            const score = document.getElementById('relativeScore').value;
+            const opinion = document.getElementById('managerEvaluationOpinion').value;
+            
+            if (!member || !score || !opinion) {
+                showAlert('모든 항목을 입력해주세요.', 'warning');
+                return;
+            }
+            
+            // 점수 범위 체크
+            if (score < 75 || score > 95) {
+                showAlert('점수는 75-95점 범위 내에서 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('평가가 저장되었습니다.', 'success');
+            
+            // 폼 초기화
+            document.getElementById('teamMembers').value = '';
+            document.getElementById('relativeScore').value = '';
+            document.getElementById('managerEvaluationOpinion').value = '';
+        }
+
+        // 일반직 평가 저장
+        function saveGeneralEvaluation() {
+            const member = document.getElementById('generalTeamMembers').value;
+            const opinion = document.getElementById('generalEvaluationOpinion').value;
+            
+            if (!member || !opinion) {
+                showAlert('모든 항목을 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('평가가 저장되었습니다.', 'success');
+            
+            // 폼 초기화
+            document.getElementById('generalTeamMembers').value = '';
+            document.getElementById('generalEvaluationOpinion').value = '';
+        }
+
+        // 알림 표시 함수
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.main-content').firstChild);
+            
+            // 3초 후 자동 제거
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // 페이지 로드 시 팀원 목록 가져오기
+        document.addEventListener('DOMContentLoaded', function() {
+            // 실제 구현시에는 API를 통해 팀원 목록을 가져와야 함
+            loadTeamMembers();
+        });
+
+        function loadTeamMembers() {
+            // 팀원 목록을 API에서 가져오는 로직
+            // 여기서는 임시로 하드코딩된 데이터 사용
+            const teamMembers = [
+                { id: '1', name: '김철수', position: '대리', department: '개발팀' },
+                { id: '2', name: '이영희', position: '과장', department: '개발팀' },
+                { id: '3', name: '박민수', position: '일반직', department: '개발팀' }
+            ];
+            
+            const select = document.getElementById('teamMembers');
+            const generalSelect = document.getElementById('generalTeamMembers');
+            
+            teamMembers.forEach(member => {
+                if (member.position !== '일반직') {
+                    const option = new Option(`${member.name} (${member.position})`, member.id);
+                    select.add(option);
+                } else {
+                    const option = new Option(`${member.name} (${member.position})`, member.id);
+                    generalSelect.add(option);
+                }
+            });
+        }
+    </script>
+</body>
+</html> 

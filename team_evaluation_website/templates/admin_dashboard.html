@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 - 인사평가 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #6f42c1 0%, #e83e8c 100%);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .admin-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 사이드바 -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar text-white p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-shield fa-3x mb-3"></i>
+                        <h5>관리자</h5>
+                    </div>
+                    <hr class="bg-white">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white active" href="#overview">
+                                <i class="fas fa-tachometer-alt me-2"></i>전체 현황
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#evaluation-management">
+                                <i class="fas fa-clipboard-check me-2"></i>평가 관리
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#user-management">
+                                <i class="fas fa-users me-2"></i>사용자 관리
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#reports">
+                                <i class="fas fa-chart-bar me-2"></i>보고서
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#settings">
+                                <i class="fas fa-cog me-2"></i>시스템 설정
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="bg-white">
+                    <div class="text-center">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-2"></i>로그아웃
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 메인 콘텐츠 -->
+            <div class="col-md-9 col-lg-10">
+                <div class="main-content p-4">
+                    <!-- 헤더 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-user-shield me-2"></i>관리자 대시보드</h2>
+                        <span class="badge bg-primary fs-6">{{ user_data.name }}님 환영합니다</span>
+                    </div>
+
+                    <!-- 전체 현황 -->
+                    <div id="overview" class="mb-4">
+                        <h4 class="mb-3"><i class="fas fa-tachometer-alt me-2"></i>전체 현황</h4>
+                        
+                        <!-- 통계 카드 -->
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="stat-card text-center">
+                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                    <h3>150</h3>
+                                    <p class="mb-0">전체 직원</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card text-center">
+                                    <i class="fas fa-clipboard-check fa-2x mb-2"></i>
+                                    <h3>120</h3>
+                                    <p class="mb-0">평가 완료</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card text-center">
+                                    <i class="fas fa-clock fa-2x mb-2"></i>
+                                    <h3>30</h3>
+                                    <p class="mb-0">평가 진행중</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card text-center">
+                                    <i class="fas fa-percentage fa-2x mb-2"></i>
+                                    <h3>80%</h3>
+                                    <p class="mb-0">평가 진행률</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 차트 -->
+                        <div class="admin-card p-4">
+                            <h5>평가 진행 현황</h5>
+                            <div class="chart-container">
+                                <canvas id="evaluationChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 평가 관리 -->
+                    <div id="evaluation-management" class="mb-4">
+                        <div class="admin-card p-4">
+                            <h4><i class="fas fa-clipboard-check me-2"></i>평가 관리</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">평가 기간 설정</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="evaluationStart" class="form-label">평가 시작일</label>
+                                                <input type="date" class="form-control" id="evaluationStart">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="evaluationEnd" class="form-label">평가 종료일</label>
+                                                <input type="date" class="form-control" id="evaluationEnd">
+                                            </div>
+                                            <button type="button" class="btn btn-primary" onclick="setEvaluationPeriod()">
+                                                <i class="fas fa-save me-2"></i>설정 저장
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">평가 상태 관리</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="evaluationStatus" class="form-label">평가 상태</label>
+                                                <select class="form-select" id="evaluationStatus">
+                                                    <option value="preparation">평가 준비</option>
+                                                    <option value="in_progress">평가 진행중</option>
+                                                    <option value="completed">평가 완료</option>
+                                                    <option value="closed">평가 종료</option>
+                                                </select>
+                                            </div>
+                                            <button type="button" class="btn btn-success" onclick="updateEvaluationStatus()">
+                                                <i class="fas fa-edit me-2"></i>상태 변경
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 사용자 관리 -->
+                    <div id="user-management" class="mb-4">
+                        <div class="admin-card p-4">
+                            <h4><i class="fas fa-users me-2"></i>사용자 관리</h4>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" placeholder="사용자 검색..." id="userSearch">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="searchUsers()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-primary" onclick="addNewUser()">
+                                        <i class="fas fa-plus me-2"></i>새 사용자 추가
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>사원번호</th>
+                                            <th>이름</th>
+                                            <th>소속</th>
+                                            <th>직위</th>
+                                            <th>직급</th>
+                                            <th>상태</th>
+                                            <th>작업</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userTableBody">
+                                        <!-- 사용자 목록이 여기에 동적으로 로드됩니다 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 보고서 -->
+                    <div id="reports" class="mb-4">
+                        <div class="admin-card p-4">
+                            <h4><i class="fas fa-chart-bar me-2"></i>보고서</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                            <h6>전체 평가 결과</h6>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="generateReport('overall')">
+                                                <i class="fas fa-download me-2"></i>다운로드
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-excel fa-3x text-success mb-3"></i>
+                                            <h6>부서별 평가 결과</h6>
+                                            <button class="btn btn-outline-success btn-sm" onclick="generateReport('department')">
+                                                <i class="fas fa-download me-2"></i>다운로드
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body text-center">
+                                            <i class="fas fa-file-word fa-3x text-primary mb-3"></i>
+                                            <h6>평가 분석 보고서</h6>
+                                            <button class="btn btn-outline-primary btn-sm" onclick="generateReport('analysis')">
+                                                <i class="fas fa-download me-2"></i>다운로드
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 설정 -->
+                    <div id="settings" class="mb-4">
+                        <div class="admin-card p-4">
+                            <h4><i class="fas fa-cog me-2"></i>시스템 설정</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">평가 기준 설정</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="passScore" class="form-label">합격 점수</label>
+                                                <input type="number" class="form-control" id="passScore" value="60" min="0" max="100">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="excellentScore" class="form-label">우수 점수</label>
+                                                <input type="number" class="form-control" id="excellentScore" value="80" min="0" max="100">
+                                            </div>
+                                            <button type="button" class="btn btn-primary" onclick="saveEvaluationCriteria()">
+                                                <i class="fas fa-save me-2"></i>저장
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">시스템 정보</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>시스템 버전:</strong> 1.0.0</p>
+                                            <p><strong>최종 업데이트:</strong> 2024-01-01</p>
+                                            <p><strong>데이터베이스:</strong> SQLite</p>
+                                            <button type="button" class="btn btn-info btn-sm" onclick="checkSystemStatus()">
+                                                <i class="fas fa-info-circle me-2"></i>시스템 상태 확인
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // 차트 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChart();
+            loadUserTable();
+        });
+
+        // 평가 진행 현황 차트
+        function initializeChart() {
+            const ctx = document.getElementById('evaluationChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['평가 완료', '평가 진행중', '평가 미시작'],
+                    datasets: [{
+                        data: [120, 30, 0],
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 평가 기간 설정
+        function setEvaluationPeriod() {
+            const startDate = document.getElementById('evaluationStart').value;
+            const endDate = document.getElementById('evaluationEnd').value;
+            
+            if (!startDate || !endDate) {
+                showAlert('시작일과 종료일을 모두 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('평가 기간이 설정되었습니다.', 'success');
+        }
+
+        // 평가 상태 변경
+        function updateEvaluationStatus() {
+            const status = document.getElementById('evaluationStatus').value;
+            showAlert(`평가 상태가 '${status}'로 변경되었습니다.`, 'success');
+        }
+
+        // 사용자 검색
+        function searchUsers() {
+            const searchTerm = document.getElementById('userSearch').value;
+            showAlert(`'${searchTerm}'에 대한 검색 결과를 표시합니다.`, 'info');
+        }
+
+        // 새 사용자 추가
+        function addNewUser() {
+            showAlert('새 사용자 추가 기능이 실행됩니다.', 'info');
+        }
+
+        // 사용자 테이블 로드
+        function loadUserTable() {
+            // 실제 구현시에는 API를 통해 사용자 목록을 가져와야 함
+            const users = [
+                { id: '11050121', name: '김철수', department: '개발팀', position: '사원', grade: 'Professional', status: '활성' },
+                { id: '11120009', name: '이영희', department: '기획팀', position: '대리', grade: 'Manager4', status: '활성' },
+                { id: '12120098', name: '박민수', department: '마케팅팀', position: '과장', grade: 'Manager3', status: '활성' }
+            ];
+            
+            const tbody = document.getElementById('userTableBody');
+            let html = '';
+            
+            users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.name}</td>
+                        <td>${user.department}</td>
+                        <td>${user.position}</td>
+                        <td>${user.grade}</td>
+                        <td><span class="badge bg-success">${user.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser('${user.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser('${user.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+
+        // 사용자 편집
+        function editUser(userId) {
+            showAlert(`사용자 ${userId} 편집 기능이 실행됩니다.`, 'info');
+        }
+
+        // 사용자 삭제
+        function deleteUser(userId) {
+            if (confirm(`사용자 ${userId}를 삭제하시겠습니까?`)) {
+                showAlert(`사용자 ${userId}가 삭제되었습니다.`, 'success');
+                loadUserTable();
+            }
+        }
+
+        // 보고서 생성
+        function generateReport(type) {
+            showAlert(`${type} 보고서가 생성되었습니다.`, 'success');
+        }
+
+        // 평가 기준 저장
+        function saveEvaluationCriteria() {
+            const passScore = document.getElementById('passScore').value;
+            const excellentScore = document.getElementById('excellentScore').value;
+            
+            showAlert('평가 기준이 저장되었습니다.', 'success');
+        }
+
+        // 시스템 상태 확인
+        function checkSystemStatus() {
+            showAlert('시스템 상태가 정상입니다.', 'success');
+        }
+
+        // 알림 표시 함수
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.main-content').firstChild);
+            
+            // 3초 후 자동 제거
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

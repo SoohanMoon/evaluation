@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}평가자(임원) 대시보드 - DK 동국홀딩스{% endblock %}
+
+{% block content %}
+<div class="user-info">
+    <div class="row">
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>이름</h6>
+            <p class="mb-0 fw-bold">{{ user_data.name }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>소속</h6>
+            <p class="mb-0 fw-bold">{{ user_data.team }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직위</h6>
+            <p class="mb-0 fw-bold">{{ user_data.position }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직급</h6>
+            <p class="mb-0 fw-bold">{{ user_data.grade }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 evaluation-type-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>팀장 평가
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('evaluate', evaluation_type='team_leader') }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>평가하기
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 evaluation-type-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>팀원 평가(관리직)
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('evaluate', evaluation_type='manager') }}" class="btn btn-secondary">
+                    <i class="fas fa-edit me-1"></i>평가하기
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 evaluation-type-card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-tie me-2"></i>팀원 평가(일반직)
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{{ url_for('evaluate', evaluation_type='general') }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>평가하기
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

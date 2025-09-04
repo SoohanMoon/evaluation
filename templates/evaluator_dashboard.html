@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>평가자 대시보드 - 인사평가 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background: rgba(255,255,255,0.95) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        .btn-evaluate {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 500;
+        }
+        .btn-evaluate:hover {
+            background: linear-gradient(45deg, #2a5298, #1e3c72);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .btn-completed {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 500;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-dark" href="#">
+                <i class="fas fa-user-tie me-2"></i>평가자 대시보드
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3 text-dark">
+                    <i class="fas fa-user me-1"></i>{{ session.evaluator_name }}
+                </span>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>로그아웃
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <!-- 상대평가 (부장~대리) -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>평가(부장~대리) - 상대평가
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if managers %}
+                            {% set total_allowed = managers|length * 80 %}
+                            {% set current_total = 0 %}
+                            {% for manager in managers %}
+                                {% if manager.employee_id in evaluated_employees %}
+                                    {% set current_total = current_total + evaluated_employees[manager.employee_id].relative_score %}
+                                {% endif %}
+                            {% endfor %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                배분 가능 점수: {{ total_allowed }}점 ({{ managers|length }}명 × 80점)<br>
+                                현재 배분된 점수: {{ current_total }}점 / {{ total_allowed }}점<br>
+                                점수 범위: 65점 ~ 95점
+                            </p>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>직원명</th>
+                                            <th>직위</th>
+                                            <th>소속</th>
+                                            <th>상태</th>
+                                            <th>평가</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for manager in managers %}
+                                        <tr>
+                                            <td>{{ manager.employee_name }}</td>
+                                            <td>{{ manager.employee_position }}</td>
+                                            <td>{{ manager.employee_dept }}</td>
+                                            <td>
+                                                {% if manager.employee_id in evaluated_employees %}
+                                                    <span class="status-badge status-completed">완료</span>
+                                                {% else %}
+                                                    <span class="status-badge status-pending">대기</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if manager.employee_id in evaluated_employees %}
+                                                    <a href="{{ url_for('relative_evaluation', employee_id=manager.employee_id) }}" 
+                                                       class="btn btn-completed btn-sm">
+                                                        <i class="fas fa-edit me-1"></i>수정
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('relative_evaluation', employee_id=manager.employee_id) }}" 
+                                                       class="btn btn-evaluate btn-sm">
+                                                        <i class="fas fa-plus me-1"></i>평가
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">평가할 부장~대리 직원이 없습니다.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 절대평가 (사원) -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star me-2"></i>평가(사원) - 절대평가
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if employees %}
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                항목별 점수: 근무태도, 팔로워십, 업무수행능력, 성장마인드셋<br>
+                                각 항목 10점 만점, 총점 100점 만점
+                            </p>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>직원명</th>
+                                            <th>직위</th>
+                                            <th>소속</th>
+                                            <th>상태</th>
+                                            <th>평가</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for employee in employees %}
+                                        <tr>
+                                            <td>{{ employee.employee_name }}</td>
+                                            <td>{{ employee.employee_position }}</td>
+                                            <td>{{ employee.employee_dept }}</td>
+                                            <td>
+                                                {% if employee.employee_id in evaluated_employees %}
+                                                    <span class="status-badge status-completed">완료</span>
+                                                {% else %}
+                                                    <span class="status-badge status-pending">대기</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if employee.employee_id in evaluated_employees %}
+                                                    <a href="{{ url_for('absolute_evaluation', employee_id=employee.employee_id) }}" 
+                                                       class="btn btn-completed btn-sm">
+                                                        <i class="fas fa-edit me-1"></i>수정
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{{ url_for('absolute_evaluation', employee_id=employee.employee_id) }}" 
+                                                       class="btn btn-evaluate btn-sm">
+                                                        <i class="fas fa-plus me-1"></i>평가
+                                                    </a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-user fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">평가할 사원이 없습니다.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 평가 현황 요약 -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>평가 현황 요약
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h4 class="text-primary">{{ managers|length }}</h4>
+                                    <p class="text-muted mb-0">부장~대리</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h4 class="text-success">{{ employees|length }}</h4>
+                                    <p class="text-muted mb-0">사원</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h4 class="text-warning">{{ evaluated_employees|length }}</h4>
+                                    <p class="text-muted mb-0">평가 완료</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3">
+                                    <h4 class="text-info">{{ (managers|length + employees|length) - evaluated_employees|length }}</h4>
+                                    <p class="text-muted mb-0">평가 대기</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</body>
+</html> 

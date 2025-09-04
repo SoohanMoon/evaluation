@@ -1,0 +1,49 @@
+{
+    "system_name": "사원 평가 시스템",
+    "version": "1.0.0",
+    "evaluation_settings": {
+        "absolute_evaluation": {
+            "max_score": 100,
+            "grade_scores": {
+                "S": 10,
+                "A": 8,
+                "B": 6,
+                "C": 4,
+                "D": 2
+            },
+            "promotion_threshold": 60
+        },
+        "relative_evaluation": {
+            "team_leader": {
+                "base_points": 90,
+                "max_per_person": 105,
+                "min_per_person": 75
+            },
+            "manager": {
+                "base_points": 80,
+                "max_per_person": 95,
+                "min_per_person": 75
+            },
+            "general": {
+                "base_points": 85,
+                "max_per_person": 105,
+                "min_per_person": 65
+            },
+            "executive_manager": {
+                "base_points": 5,
+                "max_per_person": 10,
+                "min_per_person": 0
+            }
+        },
+        "score_difference_threshold": 15
+    },
+    "data_files": {
+        "base_data": "basedata.csv",
+        "role_definitions": "Jikkeup.csv",
+        "encoding": "cp949"
+    },
+    "admin_credentials": {
+        "username": "admin",
+        "password": "admin123"
+    }
+} 

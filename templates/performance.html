@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}실적 작성{% endblock %}
+
+{% block content %}
+<div class="user-info">
+    <div class="row">
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>이름</h6>
+            <p class="mb-0">{{ user_data.name }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>소속</h6>
+            <p class="mb-0">{{ user_data.team }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직위</h6>
+            <p class="mb-0">{{ user_data.position }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-square me-2"></i>직급</h6>
+            <p class="mb-0">{{ user_data.grade }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>실적 작성 (최대 10개)
+                </h5>
+                <span class="badge bg-info">작성된 실적: <span id="performanceCount">0</span>/10</span>
+            </div>
+            <div class="card-body">
+                {% if is_finalized %}
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>이미 최종 등록된 실적이 있습니다</h6>
+                    <p class="mb-0">최종 등록된 실적은 변경할 수 없습니다.</p>
+                </div>
+                {% endif %}
+                
+                <form method="POST" id="performanceForm">
+                    {% if not is_finalized %}
+                    <div class="d-flex gap-2 mb-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>임시 저장
+                        </button>
+                        <button type="button" class="btn btn-warning" id="finalizeBtn">
+                            <i class="fas fa-lock me-1"></i>최종 등록하기
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    {% for i in range(1, 11) %}
+                    <div class="performance-section mb-4" id="section_{{ i }}">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-list-ol me-2"></i>실적 {{ i }}
+                                    {% if performance_data.get(i) %}
+                                    <span class="badge bg-light text-primary ms-2">작성됨</span>
+                                    {% endif %}
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="project_name_{{ i }}" class="form-label">① 과제명</label>
+                                    <input type="text" class="form-control project-name" 
+                                           id="project_name_{{ i }}" name="project_name_{{ i }}" 
+                                           value="{{ performance_data.get(i, {}).get('project_name', '') }}"
+                                           {% if is_finalized %}readonly{% endif %}
+                                           placeholder="주요 프로젝트나 과제명을 입력하세요">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="performance_{{ i }}" class="form-label">② 실적</label>
+                                    <textarea class="form-control performance-text" 
+                                              id="performance_{{ i }}" name="performance_{{ i }}" 
+                                              rows="4"
+                                              {% if is_finalized %}readonly{% endif %}
+                                              placeholder="구체적인 성과와 결과를 상세히 작성하세요">{{ performance_data.get(i, {}).get('performance', '') }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>작성 안내
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-lightbulb me-2"></i>실적 작성 팁</h6>
+                    <ul class="mb-0 small">
+                        <li>최대 10개까지 실적을 작성할 수 있습니다</li>
+                        <li>중요도 순서대로 작성하시면 됩니다</li>
+                        <li>구체적이고 측정 가능한 성과를 작성하세요</li>
+                        <li>정량적 지표(매출, 효율성 개선 등)를 포함하세요</li>
+                        <li>문제 해결 과정과 결과를 명확히 기술하세요</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>중요 안내</h6>
+                    <ul class="mb-0 small">
+                        <li>최종 등록 후에는 변경이 불가능합니다</li>
+                        <li>신중하게 검토 후 최종 등록해주세요</li>
+                        <li>최소 1개 이상의 실적을 작성해야 합니다</li>
+                        <li>평가 기간 중에는 실적 작성이 제한될 수 있습니다</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if performance_data %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>작성 현황
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary mb-1">{{ performance_data|length }}</h4>
+                        <small class="text-muted">작성된 실적</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1">10</h4>
+                        <small class="text-muted">최대 실적</small>
+                    </div>
+                </div>
+                {% if is_finalized %}
+                <div class="text-center mt-3">
+                    <span class="badge bg-success">최종 등록 완료</span>
+                </div>
+                {% else %}
+                <div class="text-center mt-3">
+                    <span class="badge bg-warning">임시 저장</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 최종 등록 확인 모달 -->
+<div class="modal fade" id="finalizeModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>최종 등록 확인
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>등록을 하고 나면 변경이 불가합니다.</strong></p>
+                <p>정말로 최종 등록하시겠습니까?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-warning" id="confirmFinalize">
+                    <i class="fas fa-lock me-1"></i>최종 등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('performanceForm');
+    const finalizeBtn = document.getElementById('finalizeBtn');
+    const modal = new bootstrap.Modal(document.getElementById('finalizeModal'));
+    const performanceCount = document.getElementById('performanceCount');
+    
+    // 실적 개수 업데이트 함수
+    function updatePerformanceCount() {
+        let count = 0;
+        for (let i = 1; i <= 10; i++) {
+            const projectName = document.getElementById(`project_name_${i}`).value.trim();
+            const performance = document.getElementById(`performance_${i}`).value.trim();
+            if (projectName && performance) {
+                count++;
+            }
+        }
+        performanceCount.textContent = count;
+        return count;
+    }
+    
+    // 초기 실적 개수 설정
+    updatePerformanceCount();
+    
+    // 폼 제출 시 임시 저장
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        fetch('{{ url_for("performance") }}', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    });
+    
+    // 최종 등록 버튼 클릭
+    finalizeBtn.addEventListener('click', function() {
+        const count = updatePerformanceCount();
+        
+        if (count === 0) {
+            alert('최소 1개 이상의 실적을 작성해주세요.');
+            return;
+        }
+        
+        modal.show();
+    });
+    
+    // 최종 등록 확인
+    document.getElementById('confirmFinalize').addEventListener('click', function() {
+        fetch('{{ url_for("finalize_performance") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        }).then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('오류가 발생했습니다: ' + data.message);
+            }
+        });
+        
+        modal.hide();
+    });
+    
+    // 실적 입력 필드 변경 시 개수 업데이트
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            updatePerformanceCount();
+        });
+    });
+});
+</script>
+{% endblock %} 

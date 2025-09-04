@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>임원 대시보드 - 인사평가 시스템</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(180deg, #fd7e14 0%, #e83e8c 100%);
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .evaluation-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .score-input {
+            width: 80px;
+            text-align: center;
+        }
+        .role-definition {
+            background-color: #f8f9fa;
+            border-left: 4px solid #fd7e14;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .point-limit {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 사이드바 -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar text-white p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-tie fa-3x mb-3"></i>
+                        <h5>임원 평가</h5>
+                    </div>
+                    <hr class="bg-white">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#team-leader-evaluation">
+                                <i class="fas fa-user-tie me-2"></i>팀장 평가
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#manager-evaluation">
+                                <i class="fas fa-users-cog me-2"></i>팀원 평가(관리직)
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" href="#general-evaluation">
+                                <i class="fas fa-user-friends me-2"></i>팀원 평가(일반직)
+                            </a>
+                        </li>
+                    </ul>
+                    <hr class="bg-white">
+                    <div class="text-center">
+                        <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sign-out-alt me-2"></i>로그아웃
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 메인 콘텐츠 -->
+            <div class="col-md-9 col-lg-10">
+                <div class="main-content p-4">
+                    <!-- 헤더 -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-user-tie me-2"></i>임원 평가 대시보드</h2>
+                        <span class="badge bg-warning fs-6">{{ user_data.iloc[18] }}님 환영합니다</span>
+                    </div>
+
+                    <!-- 직급별 역할 정의 -->
+                    <div class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-info-circle me-2"></i>직급별 역할 정의</h4>
+                            <div class="row">
+                                {% for _, role in jikkeup.iterrows() %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="role-definition">
+                                        <h6 class="fw-bold">{{ role.iloc[0] }} ({{ role.iloc[1] }})</h6>
+                                        <p class="mb-1">{{ role.iloc[2] }}</p>
+                                        <small class="text-muted">{{ role.iloc[3] }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 팀장 평가 -->
+                    <div id="team-leader-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-user-tie me-2"></i>팀장 평가</h4>
+                            <div class="point-limit">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>포인트 한도:</strong> 인당 90포인트 (최대 105점, 최소 75점)
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teamLeaderSelect" class="form-label fw-bold">평가 대상자 선택</label>
+                                <select class="form-select" id="teamLeaderSelect">
+                                    <option value="">팀장을 선택하세요</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teamLeaderScore" class="form-label fw-bold">평가 점수</label>
+                                <input type="number" class="form-control score-input" id="teamLeaderScore" 
+                                       min="75" max="105" placeholder="75-105점">
+                                <small class="text-muted">인당 포인트 한도: 최대 105점, 최소 75점</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="teamLeaderOpinion" class="form-label fw-bold">평가 의견</label>
+                                <textarea class="form-control" id="teamLeaderOpinion" rows="4" 
+                                          placeholder="팀장에 대한 평가 의견을 작성해주세요..."></textarea>
+                            </div>
+                            
+                            <button type="button" class="btn btn-warning" onclick="saveTeamLeaderEvaluation()">
+                                <i class="fas fa-save me-2"></i>평가 저장
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 팀원 평가(관리직) -->
+                    <div id="manager-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-users-cog me-2"></i>팀원 평가(관리직)</h4>
+                            <div class="point-limit">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>포인트 한도:</strong> 직위별 인원수 × 5포인트 (최대 10점, 최소 0점)
+                                <br><small class="text-muted">※ 평가 대상자에게 안내되지 않으며, 인사부서 참고 자료로만 활용</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="managerPositionSelect" class="form-label fw-bold">직위별 평가</label>
+                                <select class="form-select" id="managerPositionSelect" onchange="loadManagersByPosition()">
+                                    <option value="">직위를 선택하세요</option>
+                                    <option value="사원">사원</option>
+                                    <option value="대리">대리</option>
+                                    <option value="과장">과장</option>
+                                    <option value="차장">차장</option>
+                                    <option value="부장">부장</option>
+                                </select>
+                            </div>
+                            
+                            <div id="managerList" style="display: none;">
+                                <h6 class="mb-3">평가 대상자 목록</h6>
+                                <div id="managerMembers"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 팀원 평가(일반직) -->
+                    <div id="general-evaluation" class="mb-4">
+                        <div class="evaluation-card p-4">
+                            <h4><i class="fas fa-user-friends me-2"></i>팀원 평가(일반직)</h4>
+                            <div class="point-limit">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>포인트 한도:</strong> 인원수 × 85포인트 (최대 105점, 최소 65점)
+                                <br><small class="text-muted">※ 평가 대상자에게 안내되지 않으며, 인사부서 참고 자료로만 활용</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="generalMemberSelect" class="form-label fw-bold">평가 대상자 선택</label>
+                                <select class="form-select" id="generalMemberSelect">
+                                    <option value="">일반직 직원을 선택하세요</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="generalMemberScore" class="form-label fw-bold">평가 점수</label>
+                                <input type="number" class="form-control score-input" id="generalMemberScore" 
+                                       min="65" max="105" placeholder="65-105점">
+                                <small class="text-muted">인당 포인트 한도: 최대 105점, 최소 65점</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="generalMemberOpinion" class="form-label fw-bold">평가 의견</label>
+                                <textarea class="form-control" id="generalMemberOpinion" rows="4" 
+                                          placeholder="일반직 직원에 대한 평가 의견을 작성해주세요..."></textarea>
+                            </div>
+                            
+                            <button type="button" class="btn btn-info" onclick="saveGeneralMemberEvaluation()">
+                                <i class="fas fa-save me-2"></i>평가 저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 팀장 평가 저장
+        function saveTeamLeaderEvaluation() {
+            const member = document.getElementById('teamLeaderSelect').value;
+            const score = document.getElementById('teamLeaderScore').value;
+            const opinion = document.getElementById('teamLeaderOpinion').value;
+            
+            if (!member || !score || !opinion) {
+                showAlert('모든 항목을 입력해주세요.', 'warning');
+                return;
+            }
+            
+            // 점수 범위 체크
+            if (score < 75 || score > 105) {
+                showAlert('점수는 75-105점 범위 내에서 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('팀장 평가가 저장되었습니다.', 'success');
+            
+            // 폼 초기화
+            document.getElementById('teamLeaderSelect').value = '';
+            document.getElementById('teamLeaderScore').value = '';
+            document.getElementById('teamLeaderOpinion').value = '';
+        }
+
+        // 직위별 관리직원 목록 로드
+        function loadManagersByPosition() {
+            const position = document.getElementById('managerPositionSelect').value;
+            if (!position) {
+                document.getElementById('managerList').style.display = 'none';
+                return;
+            }
+            
+            // 실제 구현시에는 API를 통해 해당 직위의 관리직원 목록을 가져와야 함
+            const managers = getManagersByPosition(position);
+            displayManagerList(managers, position);
+        }
+
+        // 직위별 관리직원 데이터 (임시)
+        function getManagersByPosition(position) {
+            const managerData = {
+                '사원': [
+                    { id: '1', name: '김철수', department: '개발팀', grade: 'Professional' },
+                    { id: '2', name: '이영희', department: '개발팀', grade: 'Professional' }
+                ],
+                '대리': [
+                    { id: '3', name: '박민수', department: '개발팀', grade: 'Manager4' },
+                    { id: '4', name: '정수진', department: '개발팀', grade: 'Manager4' }
+                ],
+                '과장': [
+                    { id: '5', name: '최동욱', department: '개발팀', grade: 'Manager3' }
+                ],
+                '차장': [
+                    { id: '6', name: '한지민', department: '개발팀', grade: 'Manager2' }
+                ],
+                '부장': [
+                    { id: '7', name: '송민호', department: '개발팀', grade: 'Manager1' }
+                ]
+            };
+            
+            return managerData[position] || [];
+        }
+
+        // 관리직원 목록 표시
+        function displayManagerList(managers, position) {
+            const container = document.getElementById('managerMembers');
+            const listDiv = document.getElementById('managerList');
+            
+            if (managers.length === 0) {
+                container.innerHTML = '<p class="text-muted">해당 직위의 직원이 없습니다.</p>';
+                listDiv.style.display = 'block';
+                return;
+            }
+            
+            let html = '';
+            managers.forEach(manager => {
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-4">
+                                    <strong>${manager.name}</strong><br>
+                                    <small class="text-muted">${manager.department}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">${manager.grade}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" class="form-control score-input" 
+                                           min="0" max="10" placeholder="0-10점"
+                                           data-manager-id="${manager.id}">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            onclick="saveManagerScore('${manager.id}')">
+                                        저장
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            listDiv.style.display = 'block';
+        }
+
+        // 관리직원 점수 저장
+        function saveManagerScore(managerId) {
+            const scoreInput = document.querySelector(`input[data-manager-id="${managerId}"]`);
+            const score = scoreInput.value;
+            
+            if (!score) {
+                showAlert('점수를 입력해주세요.', 'warning');
+                return;
+            }
+            
+            if (score < 0 || score > 10) {
+                showAlert('점수는 0-10점 범위 내에서 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('관리직원 평가가 저장되었습니다.', 'success');
+            scoreInput.value = '';
+        }
+
+        // 일반직원 평가 저장
+        function saveGeneralMemberEvaluation() {
+            const member = document.getElementById('generalMemberSelect').value;
+            const score = document.getElementById('generalMemberScore').value;
+            const opinion = document.getElementById('generalMemberOpinion').value;
+            
+            if (!member || !score || !opinion) {
+                showAlert('모든 항목을 입력해주세요.', 'warning');
+                return;
+            }
+            
+            // 점수 범위 체크
+            if (score < 65 || score > 105) {
+                showAlert('점수는 65-105점 범위 내에서 입력해주세요.', 'warning');
+                return;
+            }
+            
+            showAlert('일반직원 평가가 저장되었습니다.', 'success');
+            
+            // 폼 초기화
+            document.getElementById('generalMemberSelect').value = '';
+            document.getElementById('generalMemberScore').value = '';
+            document.getElementById('generalMemberOpinion').value = '';
+        }
+
+        // 알림 표시 함수
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.querySelector('.main-content').insertBefore(alertDiv, document.querySelector('.main-content').firstChild);
+            
+            // 3초 후 자동 제거
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTeamLeaders();
+            loadGeneralMembers();
+        });
+
+        // 팀장 목록 로드
+        function loadTeamLeaders() {
+            // 실제 구현시에는 API를 통해 팀장 목록을 가져와야 함
+            const teamLeaders = [
+                { id: '1', name: '김팀장', department: '개발팀' },
+                { id: '2', name: '이팀장', department: '기획팀' },
+                { id: '3', name: '박팀장', department: '마케팅팀' }
+            ];
+            
+            const select = document.getElementById('teamLeaderSelect');
+            teamLeaders.forEach(leader => {
+                const option = new Option(`${leader.name} (${leader.department})`, leader.id);
+                select.add(option);
+            });
+        }
+
+        // 일반직원 목록 로드
+        function loadGeneralMembers() {
+            // 실제 구현시에는 API를 통해 일반직원 목록을 가져와야 함
+            const generalMembers = [
+                { id: '1', name: '김일반', department: '개발팀' },
+                { id: '2', name: '이일반', department: '기획팀' },
+                { id: '3', name: '박일반', department: '마케팅팀' }
+            ];
+            
+            const select = document.getElementById('generalMemberSelect');
+            generalMembers.forEach(member => {
+                const option = new Option(`${member.name} (${member.department})`, member.id);
+                select.add(option);
+            });
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DK 동국홀딩스 인사평가 시스템{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --dk-blue: #0f4c75;
+            --dk-blue-light: #3282b8;
+            --dk-red: #be0000;
+            --dk-red-light: #e74c3c;
+            --dk-gray: #2c3e50;
+            --dk-gray-light: #5d6d7e;
+            --dk-bg: #f5f6fa;
+            --dk-white: #ffffff;
+        }
+
+        body {
+            background-color: var(--dk-bg);
+            font-family: 'Noto Sans KR', sans-serif;
+            color: var(--dk-gray);
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, #1e3a8a 100%) !important;
+            box-shadow: 0 2px 10px rgba(15, 76, 117, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--dk-white) !important;
+            font-size: 1.4rem;
+        }
+
+        .navbar-brand i {
+            color: var(--dk-red-light);
+        }
+
+        .navbar-nav .nav-link {
+            color: var(--dk-white) !important;
+            font-weight: 500;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: var(--dk-blue-light) !important;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--dk-blue-light);
+            color: var(--dk-white);
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            color: var(--dk-white);
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0d3d5f 0%, #2a6fa0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 76, 117, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #0d3d5f 0%, #2a6fa0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 76, 117, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--dk-blue);
+            color: var(--dk-blue);
+            background: transparent;
+            border-radius: 8px;
+            padding: 10px 24px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--dk-blue);
+            color: var(--dk-white);
+            transform: translateY(-1px);
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--dk-blue);
+            box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.15);
+        }
+
+        .alert {
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d1e7fd 100%);
+            color: var(--dk-blue);
+            border-left: 4px solid var(--dk-blue);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .table th {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            color: var(--dk-white);
+            border: none;
+            font-weight: 600;
+            padding: 12px 16px;
+        }
+
+        .table td {
+            padding: 12px 16px;
+            border-color: #f3f4f6;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            color: var(--dk-white);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(15, 76, 117, 0.25);
+        }
+
+        .user-info h4 {
+            color: var(--dk-blue-light);
+            font-weight: 600;
+        }
+
+        .evaluation-item {
+            background: var(--dk-white);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border-left: 4px solid var(--dk-blue);
+        }
+
+        .evaluation-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-input {
+            width: 70px;
+            text-align: center;
+            border-radius: 6px;
+            border: 2px solid #e5e7eb;
+            padding: 8px;
+            font-weight: 500;
+        }
+
+        .score-input:focus {
+            border-color: var(--dk-blue);
+            box-shadow: 0 0 0 3px rgba(15, 76, 117, 0.15);
+        }
+
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+            color: var(--dk-white);
+            border-radius: 12px 12px 0 0;
+            padding: 1.5rem;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, var(--dk-gray) 0%, var(--dk-blue) 100%);
+            color: var(--dk-white);
+            text-align: center;
+            padding: 24px 0;
+            margin-top: 60px;
+        }
+
+        .footer p {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        /* 커스텀 스타일 */
+        .grade-badge {
+            background: var(--dk-red);
+            color: var(--dk-white);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .point-display {
+            background: linear-gradient(135deg, var(--dk-blue-light) 0%, var(--dk-blue) 100%);
+            color: var(--dk-white);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .performance-card {
+            border-left: 4px solid var(--dk-red);
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        }
+
+        .evaluation-type-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .evaluation-type-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(15, 76, 117, 0.2);
+        }
+
+        .evaluation-type-card .card-header {
+            background: linear-gradient(135deg, var(--dk-blue) 0%, var(--dk-blue-light) 100%);
+        }
+
+        .evaluation-type-card .card-body {
+            padding: 1.5rem;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+            
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .user-info {
+                padding: 16px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 네비게이션 바 -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-chart-line me-2"></i>DK 동국홀딩스 인사평가
+            </a>
+            
+            {% if session.user_type %}
+            <div class="navbar-nav ms-auto">
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>{{ session.user_data.name }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">대시보드</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">로그아웃</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="container my-4">
+        <!-- 플래시 메시지 -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 DK 동국홀딩스 인사평가 시스템. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

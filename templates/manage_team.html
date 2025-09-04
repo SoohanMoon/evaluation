@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}팀원 관리{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+    <h2 class="fw-bold text-primary">
+        <i class="fas fa-users-cog me-2"></i>팀원 관리
+    </h2>
+    <p class="text-muted">평가 대상 팀원 목록을 관리하세요</p>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>팀원 목록</h5>
+    </div>
+    <div class="card-body">
+        {% if employees %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>사번</th>
+                        <th>이름</th>
+                        <th>직위</th>
+                        <th>소속</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>{{ employee.id }}</td>
+                        <td>{{ employee.name }}</td>
+                        <td>
+                            {% if employee.position == '사원' %}
+                                <span class="badge bg-success">{{ employee.position }}</span>
+                            {% else %}
+                                <span class="badge bg-primary">{{ employee.position }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ employee.department }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit me-1"></i>수정
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <p class="text-muted">등록된 팀원이 없습니다.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+        <i class="fas fa-arrow-left me-2"></i>대시보드로 돌아가기
+    </a>
+</div>
+{% endblock %} 
