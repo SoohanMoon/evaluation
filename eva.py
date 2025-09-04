@@ -424,34 +424,36 @@ def evaluate(evaluation_type):
             evaluatee_id = int(row['evaluateeid'])  # Int64를 int로 변환
             evaluatee_data = backdata[backdata.iloc[:, 0] == evaluatee_id]
             if not evaluatee_data.empty:
-                # 직전 평가 점수 가져오기
+                # 직전 평가 점수 가져오기 (팀장 평가에서는 제외)
                 before_point = 0
                 
-                # 평가자(임원)의 팀원 평가(관리직)인 경우, 팀장 평가 점수를 가져오기
-                if session['user_type'] == "평가자(임원)" and evaluation_type == "manager":
-                    # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
-                    conn = sqlite3.connect('evaluation.db')
-                    cursor = conn.cursor()
-                    cursor.execute('''
-                        SELECT scores FROM evaluation_data 
-                        WHERE evaluatee_id = ? AND evaluation_type = 'manager'
-                        ORDER BY created_at DESC LIMIT 1
-                    ''', (evaluatee_id,))
-                    result = cursor.fetchone()
-                    conn.close()
-                    
-                    if result:
+                # 평가자(임원)의 팀장 평가가 아닌 경우에만 직전 점수 가져오기
+                if not (session['user_type'] == "평가자(임원)" and evaluation_type == "team_leader"):
+                    # 평가자(임원)의 팀원 평가(관리직)인 경우, 팀장 평가 점수를 가져오기
+                    if session['user_type'] == "평가자(임원)" and evaluation_type == "manager":
+                        # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
+                        conn = sqlite3.connect('evaluation.db')
+                        cursor = conn.cursor()
+                        cursor.execute('''
+                            SELECT scores FROM evaluation_data 
+                            WHERE evaluatee_id = ? AND evaluation_type = 'manager'
+                            ORDER BY created_at DESC LIMIT 1
+                        ''', (evaluatee_id,))
+                        result = cursor.fetchone()
+                        conn.close()
+                        
+                        if result:
+                            try:
+                                scores_data = json.loads(result[0])
+                                before_point = scores_data.get('score', 0)
+                            except:
+                                before_point = 0
+                    else:
+                        # 기존 방식: backdata의 I열에서 직전 점수 가져오기
                         try:
-                            scores_data = json.loads(result[0])
-                            before_point = scores_data.get('score', 0)
+                            before_point = int(evaluatee_data.iloc[0, 8])  # I열(인덱스 8)에서 직전 점수 가져오기
                         except:
                             before_point = 0
-                else:
-                    # 기존 방식: backdata의 I열에서 직전 점수 가져오기
-                    try:
-                        before_point = int(evaluatee_data.iloc[0, 8])  # I열(인덱스 8)에서 직전 점수 가져오기
-                    except:
-                        before_point = 0
                 
                 evaluatees.append({
                     'id': str(evaluatee_id),  # 문자열로 변환
