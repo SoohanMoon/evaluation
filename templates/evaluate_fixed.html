@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}평가 - {{ evaluation_type }}{% endblock %}
+{% block title %}?��? - {{ evaluation_type }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -69,7 +69,7 @@
     border-left: 4px solid #16213e;
 }
 
-/* 최종 제출 버튼 스타일 */
+/* 최종 ?�출 버튼 ?��???*/
 .btn-final-submit {
     background-color: #dc3545;
     border-color: #dc3545;
@@ -83,7 +83,7 @@
     color: white;
 }
 
-/* 임시저장 버튼 스타일 */
+/* ?�시?�??버튼 ?��???*/
 .btn-temp-save {
     background-color: #6c757d;
     border-color: #6c757d;
@@ -96,7 +96,7 @@
     color: white;
 }
 
-/* 실적 조회 버튼 스타일 */
+/* ?�적 조회 버튼 ?��???*/
 .btn-performance-view {
     background-color: #16213e;
     border-color: #16213e;
@@ -109,7 +109,7 @@
     color: white;
 }
 
-/* 포인트 한도 알림 스타일 */
+/* ?�인???�도 ?�림 ?��???*/
 .alert-info {
     background-color: #e3f2fd;
     border-color: #16213e;
@@ -122,7 +122,7 @@
     color: #1a1a2e;
 }
 
-/* 소명서 경고 스타일 */
+/* ?�명??경고 ?��???*/
 .alert-warning .alert-warning {
     background-color: #fff3cd;
     border-color: #ffc107;
@@ -135,47 +135,47 @@
 <div class="user-info">
     <div class="row">
         <div class="col-md-3">
-            <h6><i class="fas fa-square me-2"></i>평가자</h6>
+            <h6><i class="fas fa-square me-2"></i>?��???/h6>
             <p class="mb-0">{{ user_data.name }}</p>
         </div>
         <div class="col-md-3">
-            <h6><i class="fas fa-square me-2"></i>소속</h6>
+            <h6><i class="fas fa-square me-2"></i>?�속</h6>
             <p class="mb-0">{{ user_data.team }}</p>
         </div>
         <div class="col-md-3">
-            <h6><i class="fas fa-square me-2"></i>평가 유형</h6>
+            <h6><i class="fas fa-square me-2"></i>?��? ?�형</h6>
                             <p class="mb-0">
-                    {% if evaluation_type == 'employee' %}팀원 평가(사원)
-                    {% elif evaluation_type == 'manager' and session['user_type'] == '평가자(팀장)' %}팀원 평가(대리 이상)
-                    {% elif evaluation_type == 'manager' and session['user_type'] == '평가자(임원)' %}팀원 평가(관리직)
-                    {% elif evaluation_type == 'general' %}팀원 평가(일반직)
-                    {% elif evaluation_type == 'team_leader' %}팀장 평가
+                    {% if evaluation_type == 'employee' %}?�???��?(?�원)
+                    {% elif evaluation_type == 'manager' and session['user_type'] == '?��????�??' %}?�???��?(?��??�상)
+                    {% elif evaluation_type == 'manager' and session['user_type'] == '?��????�원)' %}?�???��?(관리직)
+                    {% elif evaluation_type == 'general' %}?�???��?(?�반�?
+                    {% elif evaluation_type == 'team_leader' %}?�???��?
                     {% endif %}
                 </p>
         </div>
         <div class="col-md-3">
-            <h6><i class="fas fa-square me-2"></i>평가 대상</h6>
-            <p class="mb-0">{{ evaluatees|length }}명</p>
+            <h6><i class="fas fa-square me-2"></i>?��? ?�??/h6>
+            <p class="mb-0">{{ evaluatees|length }}�?/p>
         </div>
     </div>
 </div>
 
 {% if evaluation_type == 'employee' %}
 <div class="absolute-evaluation">
-    <h5><i class="fas fa-star me-2"></i>절대평가 안내</h5>
+    <h5><i class="fas fa-star me-2"></i>?��??��? ?�내</h5>
     <ul class="mb-0">
-        <li>S(10점), A(8점), B(6점), C(4점), D(2점) 등급별 평가</li>
-        <li>직급 체류기간 평균 점수가 60점 미만이면 대리 승진 제외</li>
-        <li>각 평가 항목별로 등급을 선택하세요</li>
+        <li>S(10??, A(8??, B(6??, C(4??, D(2?? ?�급�??��?</li>
+        <li>직급 체류기간 ?�균 ?�수가 60??미만?�면 ?��??�진 ?�외</li>
+        <li>�??��? ??��별로 ?�급???�택?�세??/li>
     </ul>
 </div>
 {% elif evaluation_type == 'general' %}
 <div class="alert alert-info">
-    <h5><i class="fas fa-comment me-2"></i>일반직 평가 안내</h5>
-    {% if session['user_type'] == '평가자(팀장)' %}
-    <p class="mb-0">일반직 평가는 평가 의견만 작성하시면 됩니다. 점수 입력은 필요하지 않습니다.</p>
-    {% elif session['user_type'] == '평가자(임원)' %}
-    <p class="mb-0">상대평가: 인원수 × 85 포인트, 인당 최소 65점, 최대 105점</p>
+    <h5><i class="fas fa-comment me-2"></i>?�반�??��? ?�내</h5>
+    {% if session['user_type'] == '?��????�??' %}
+    <p class="mb-0">?�반�??��????��? ?�견�??�성?�시�??�니?? ?�수 ?�력?� ?�요?��? ?�습?�다.</p>
+    {% elif session['user_type'] == '?��????�원)' %}
+    <p class="mb-0">?��??��?: ?�원??× 85 ?�인?? ?�당 최소 65?? 최�? 105??/p>
     {% endif %}
 </div>
 {% endif %}
@@ -183,10 +183,10 @@
 <div class="row">
     <div class="col-md-8">
         {% if evaluation_type == 'employee' %}
-        <!-- 절대평가 폼 -->
+        <!-- ?��??��? ??-->
         {% for grade, grade_evaluatees in grade_groups.items() %}
         <div class="grade-group mb-4">
-            <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}명)</h6>
+            <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}�?</h6>
             
             {% for evaluatee in grade_evaluatees %}
             <div class="evaluation-card" id="evaluatee-{{ evaluatee.id }}">
@@ -200,41 +200,41 @@
                         </div>
                         <div class="col-md-6 text-end">
                             {% if evaluatee.before_point %}
-                            <span class="badge bg-info">직전 평가: {{ evaluatee.before_point }}점</span>
+                            <span class="badge bg-info">직전 ?��?: {{ evaluatee.before_point }}??/span>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
                 <div class="card-body">
-                    <!-- 실적 조회 -->
+                    <!-- ?�적 조회 -->
                     <div class="performance-view">
-                        <h6><i class="fas fa-file-alt me-2"></i>작성된 실적</h6>
+                        <h6><i class="fas fa-file-alt me-2"></i>?�성???�적</h6>
                         <div id="performance-{{ evaluatee.id|string }}">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadPerformance('{{ evaluatee.id|string }}')">
-                                <i class="fas fa-eye me-1"></i>실적 조회
+                                <i class="fas fa-eye me-1"></i>?�적 조회
                             </button>
                         </div>
                     </div>
                     
-                    <!-- 절대평가 -->
+                    <!-- ?��??��? -->
                     <div class="absolute-evaluation-form">
-                        <h6><i class="fas fa-star me-2"></i>절대평가</h6>
+                        <h6><i class="fas fa-star me-2"></i>?��??��?</h6>
                         <div class="table-responsive">
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>평가 항목</th>
-                                        <th>S(10점)</th>
-                                        <th>A(8점)</th>
-                                        <th>B(6점)</th>
-                                        <th>C(4점)</th>
-                                        <th>D(2점)</th>
+                                        <th>?��? ??��</th>
+                                        <th>S(10??</th>
+                                        <th>A(8??</th>
+                                        <th>B(6??</th>
+                                        <th>C(4??</th>
+                                        <th>D(2??</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>근무태도 - 근무시간 준수 및 업무 집중</td>
+                                        <td>근무?�도 - 근무?�간 준??�??�무 집중</td>
                                         <td><input type="radio" name="attitude_1_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_1_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_1_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -242,7 +242,7 @@
                                         <td><input type="radio" name="attitude_1_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>근무태도 - 직장 내 예의범절 준수</td>
+                                        <td>근무?�도 - 직장 ???�의범절 준??/td>
                                         <td><input type="radio" name="attitude_2_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_2_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_2_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -250,7 +250,7 @@
                                         <td><input type="radio" name="attitude_2_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>근무태도 - 책임감 있는 업무 수행</td>
+                                        <td>근무?�도 - 책임�??�는 ?�무 ?�행</td>
                                         <td><input type="radio" name="attitude_3_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_3_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="attitude_3_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -258,7 +258,7 @@
                                         <td><input type="radio" name="attitude_3_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>팔로워십 - 주어진 역할 적극 수용</td>
+                                        <td>?�로?�십 - 주어�???�� ?�극 ?�용</td>
                                         <td><input type="radio" name="followership_1_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_1_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_1_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -266,7 +266,7 @@
                                         <td><input type="radio" name="followership_1_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>팔로워십 - 팀 목표 달성 지원 및 협력</td>
+                                        <td>?�로?�십 - ?� 목표 ?�성 지??�??�력</td>
                                         <td><input type="radio" name="followership_2_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_2_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_2_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -274,7 +274,7 @@
                                         <td><input type="radio" name="followership_2_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>팔로워십 - 조직 가치와 문화 이해 및 적응</td>
+                                        <td>?�로?�십 - 조직 가치�? 문화 ?�해 �??�응</td>
                                         <td><input type="radio" name="followership_3_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_3_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="followership_3_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -282,7 +282,7 @@
                                         <td><input type="radio" name="followership_3_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>업무수행 능력 - 업무 내용 이해 및 정확한 수행</td>
+                                        <td>?�무?�행 ?�력 - ?�무 ?�용 ?�해 �??�확???�행</td>
                                         <td><input type="radio" name="performance_1_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="performance_1_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="performance_1_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -290,7 +290,7 @@
                                         <td><input type="radio" name="performance_1_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>업무수행 능력 - 기한 내 업무 완료</td>
+                                        <td>?�무?�행 ?�력 - 기한 ???�무 ?�료</td>
                                         <td><input type="radio" name="performance_2_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="performance_2_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="performance_2_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -298,7 +298,7 @@
                                         <td><input type="radio" name="performance_2_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>성장 마인드셋 - 새로운 지식 습득 및 활용</td>
+                                        <td>?�장 마인?�셋 - ?�로??지???�득 �??�용</td>
                                         <td><input type="radio" name="growth_1_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="growth_1_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="growth_1_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -306,7 +306,7 @@
                                         <td><input type="radio" name="growth_1_{{ evaluatee.id }}" value="2" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                     </tr>
                                     <tr>
-                                        <td>성장 마인드셋 - 피드백 수용 및 자기계발 지속</td>
+                                        <td>?�장 마인?�셋 - ?�드�??�용 �??�기계발 지??/td>
                                         <td><input type="radio" name="growth_2_{{ evaluatee.id }}" value="10" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="growth_2_{{ evaluatee.id }}" value="8" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
                                         <td><input type="radio" name="growth_2_{{ evaluatee.id }}" value="6" class="form-check-input" onchange="calculateTotalScore('{{ evaluatee.id }}')"></td>
@@ -317,15 +317,15 @@
                             </table>
                         </div>
                         <div class="text-end">
-                            <strong>총점: <span id="total-score-{{ evaluatee.id }}">0</span>/100점</strong>
+                            <strong>총점: <span id="total-score-{{ evaluatee.id }}">0</span>/100??/strong>
                         </div>
                     </div>
                     
-                    <!-- 평가 의견 -->
+                    <!-- ?��? ?�견 -->
                     <div class="mt-3">
-                        <label class="form-label">평가 의견</label>
+                        <label class="form-label">?��? ?�견</label>
                         <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" 
-                                  placeholder="평가 의견을 작성하세요..."></textarea>
+                                  placeholder="?��? ?�견???�성?�세??.."></textarea>
                     </div>
                     
                     <div class="mt-3 text-end">
@@ -336,55 +336,55 @@
         </div>
         {% endfor %}
         
-        <!-- 절대평가 임시저장/최종제출 버튼 -->
+        <!-- ?��??��? ?�시?�??최종?�출 버튼 -->
         <div class="d-flex gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-temp-save" onclick="saveEvaluationsTemporary('{{ evaluation_type }}')">
-                <i class="fas fa-save me-1"></i>임시저장
+                <i class="fas fa-save me-1"></i>?�시?�??
             </button>
             <button type="button" class="btn btn-sm btn-final-submit" onclick="submitEvaluationsBulk('{{ evaluation_type }}')">
-                <i class="fas fa-paper-plane me-1"></i>최종 제출
+                <i class="fas fa-paper-plane me-1"></i>최종 ?�출
             </button>
         </div>
         
         {% elif evaluation_type in ['manager', 'team_leader'] %}
-        <!-- 상대평가 폼 -->
+        <!-- ?��??��? ??-->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>상대평가
+                    <i class="fas fa-chart-line me-2"></i>?��??��?
                 </h5>
-                {% if (session['user_type'] == '평가자(임원)' and evaluation_type in ['manager', 'team_leader']) or (session['user_type'] == '평가자(팀장)' and evaluation_type == 'manager') %}
+                {% if (session['user_type'] == '?��????�원)' and evaluation_type in ['manager', 'team_leader']) or (session['user_type'] == '?��????�??' and evaluation_type == 'manager') %}
                 <div>
                     <button type="button" class="btn btn-sm btn-temp-save me-2" onclick="saveEvaluationsTemporary('{{ evaluation_type }}')">
-                        <i class="fas fa-save me-1"></i>임시저장
+                        <i class="fas fa-save me-1"></i>?�시?�??
                     </button>
                     <button type="button" class="btn btn-sm btn-final-submit" onclick="submitEvaluationsBulk('{{ evaluation_type }}')">
-                        <i class="fas fa-paper-plane me-1"></i>최종 제출
+                        <i class="fas fa-paper-plane me-1"></i>최종 ?�출
                     </button>
                 </div>
                 {% endif %}
             </div>
             <div class="card-body">
-                {% if session['user_type'] == '평가자(임원)' %}
-                {# 임원은 직급별 그룹 #}
+                {% if session['user_type'] == '?��????�원)' %}
+                {# ?�원?� 직급�?그룹 #}
                 {% for grade, grade_evaluatees in grade_groups.items() %}
                 <div class="grade-group mb-4">
-                    <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}명)</h6>
+                    <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}�?</h6>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="alert alert-info">
-                                <strong>포인트 한도:</strong> 
+                                <strong>?�인???�도:</strong> 
                                 {% if evaluation_type == 'team_leader' %}
-                                    인원수 × 85 포인트, 인당 최대 105점, 최소 75점
+                                    ?�원??× 85 ?�인?? ?�당 최�? 105?? 최소 75??
                                 {% elif evaluation_type == 'manager' %}
-                                    인원수 × 5 포인트, 인당 최대 10점, 최소 0점
+                                    ?�원??× 5 ?�인?? ?�당 최�? 10?? 최소 0??
                                 {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="alert alert-warning">
-                                <strong>남은 포인트:</strong> <span id="remaining-points-{{ grade }}">-</span>
+                                <strong>?��? ?�인??</strong> <span id="remaining-points-{{ grade }}">-</span>
                             </div>
                         </div>
                     </div>
@@ -397,36 +397,36 @@
                                 <small class="text-muted">{{ evaluatee.team }} | {{ evaluatee.position }}</small>
                                 {% if evaluatee.before_point %}
                                 <div class="mt-1">
-                                    <small class="text-info">팀장 평가: {{ evaluatee.before_point }}점</small>
+                                    <small class="text-info">?�???��?: {{ evaluatee.before_point }}??/small>
                                 </div>
                                 {% endif %}
                             </div>
                             <div class="col-md-6">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label">평가 점수</label>
+                                        <label class="form-label">?��? ?�수</label>
                                         <input type="number" class="form-control score-input" id="score-{{ evaluatee.id }}" 
-                                               min="0" max="105" step="1" placeholder="점수 입력"
+                                               min="0" max="105" step="1" placeholder="?�수 ?�력"
                                                data-before-point="{{ evaluatee.before_point or 0 }}"
                                                oninput="updateTotalScore('{{ evaluatee.id }}')">
                                         <div id="total-score-{{ evaluatee.id }}" class="mt-1">
-                                            <small class="text-success"><strong>합계: <span id="total-{{ evaluatee.id }}">0</span>점</strong></small>
+                                            <small class="text-success"><strong>?�계: <span id="total-{{ evaluatee.id }}">0</span>??/strong></small>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-2 text-end">
                                 <button type="button" class="btn btn-sm btn-performance-view" onclick="loadPerformance('{{ evaluatee.id }}')">
-                                    <i class="fas fa-eye me-1"></i>실적 조회
+                                    <i class="fas fa-eye me-1"></i>?�적 조회
                                 </button>
                             </div>
                         </div>
-                        <!-- 실적 표시 영역 추가 -->
+                        <!-- ?�적 ?�시 ?�역 추�? -->
                         <div id="performance-{{ evaluatee.id }}" class="mt-3"></div>
                         <div class="row mt-3">
                             <div class="col-12">
-                                <label class="form-label">평가 의견</label>
-                                <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="평가 의견을 작성해주세요"></textarea>
+                                <label class="form-label">?��? ?�견</label>
+                                <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="?��? ?�견???�성?�주?�요"></textarea>
                             </div>
                         </div>
                     </div>
@@ -434,16 +434,16 @@
                 </div>
                 {% endfor %}
                 {% else %}
-                {# 팀장은 평면 리스트 #}
+                {# ?�?��? ?�면 리스??#}
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="alert alert-info">
-                            <strong>포인트 한도:</strong> 인원수 × 80 포인트, 인당 한도 65~95점
+                            <strong>?�인???�도:</strong> ?�원??× 80 ?�인?? ?�당 ?�도 65~95??
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="alert alert-warning">
-                            <strong>남은 포인트:</strong> <span id="remaining-points-manager">{{ evaluatees|length * 80 }}</span>
+                            <strong>?��? ?�인??</strong> <span id="remaining-points-manager">{{ evaluatees|length * 80 }}</span>
                         </div>
                     </div>
                 </div>
@@ -455,16 +455,16 @@
                             <small class="text-muted">{{ evaluatee.team }} | {{ evaluatee.position }}</small>
                             {% if evaluatee.before_point %}
                             <div class="mt-1">
-                                <small class="text-info">직전 점수: {{ evaluatee.before_point }}점</small>
+                                <small class="text-info">직전 ?�수: {{ evaluatee.before_point }}??/small>
                             </div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label">평가 점수</label>
+                                    <label class="form-label">?��? ?�수</label>
                                     <input type="number" class="form-control score-input" id="score-{{ evaluatee.id }}" 
-                                           min="65" max="95" step="1" placeholder="점수 입력"
+                                           min="65" max="95" step="1" placeholder="?�수 ?�력"
                                            data-before-point="{{ evaluatee.before_point or 0 }}"
                                            oninput="checkScoreDifference('{{ evaluatee.id }}')">
                                     <div id="explanation-{{ evaluatee.id }}" style="display: none;"></div>
@@ -473,16 +473,16 @@
                         </div>
                         <div class="col-md-2 text-end">
                             <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadPerformance('{{ evaluatee.id|string }}')">
-                                <i class="fas fa-eye me-1"></i>실적 조회
+                                <i class="fas fa-eye me-1"></i>?�적 조회
                             </button>
                         </div>
                     </div>
-                    <!-- 실적 표시 영역 추가 -->
+                    <!-- ?�적 ?�시 ?�역 추�? -->
                     <div id="performance-{{ evaluatee.id|string }}" class="mt-3"></div>
                     <div class="row mt-3">
                         <div class="col-12">
-                            <label class="form-label">평가 의견</label>
-                            <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="평가 의견을 작성해주세요"></textarea>
+                            <label class="form-label">?��? ?�견</label>
+                            <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="?��? ?�견???�성?�주?�요"></textarea>
                         </div>
                     </div>
                 </div>
@@ -493,21 +493,21 @@
         {% elif evaluation_type == 'general' %}
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-comment me-2"></i>일반직 평가</h5>
-                {% if session['user_type'] == '평가자(임원)' %}
+                <h5 class="mb-0"><i class="fas fa-comment me-2"></i>?�반�??��?</h5>
+                {% if session['user_type'] == '?��????�원)' %}
                 <div>
                     <button type="button" class="btn btn-sm btn-temp-save me-2" onclick="saveEvaluationsTemporary('{{ evaluation_type }}')">
-                        <i class="fas fa-save me-1"></i>임시저장
+                        <i class="fas fa-save me-1"></i>?�시?�??
                     </button>
                     <button type="button" class="btn btn-sm btn-final-submit" onclick="submitEvaluationsBulk('{{ evaluation_type }}')">
-                        <i class="fas fa-paper-plane me-1"></i>최종 제출
+                        <i class="fas fa-paper-plane me-1"></i>최종 ?�출
                     </button>
                 </div>
                 {% endif %}
             </div>
             <div class="card-body">
-                {% if session['user_type'] == '평가자(팀장)' %}
-                <div class="alert alert-info mb-3">일반직 평가는 평가 의견만 작성하시면 됩니다.</div>
+                {% if session['user_type'] == '?��????�??' %}
+                <div class="alert alert-info mb-3">?�반�??��????��? ?�견�??�성?�시�??�니??</div>
                 {% for evaluatee in evaluatees %}
                 <div class="evaluatee-item border rounded p-3 mb-3" data-eid="{{ evaluatee.id }}">
                     <div class="row align-items-center">
@@ -517,36 +517,36 @@
                         </div>
                         <div class="col-md-8 text-end">
                             <button type="button" class="btn btn-sm btn-performance-view" onclick="loadPerformance('{{ evaluatee.id|string }}')">
-                                <i class="fas fa-eye me-1"></i>실적 조회
+                                <i class="fas fa-eye me-1"></i>?�적 조회
                             </button>
                         </div>
                     </div>
                     <div class="row mt-3">
                         <div class="col-12">
-                            <label class="form-label">평가 의견</label>
-                            <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="평가 의견을 작성해주세요"></textarea>
+                            <label class="form-label">?��? ?�견</label>
+                            <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="?��? ?�견???�성?�주?�요"></textarea>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
                 <div class="d-flex gap-2 mt-3">
                     <button type="button" class="btn btn-sm btn-temp-save" onclick="saveEvaluationsTemporary('{{ evaluation_type }}')">
-                        <i class="fas fa-save me-1"></i>임시저장
+                        <i class="fas fa-save me-1"></i>?�시?�??
                     </button>
                     <button type="button" class="btn btn-sm btn-final-submit" onclick="submitEvaluationsBulk('{{ evaluation_type }}')">
-                        <i class="fas fa-paper-plane me-1"></i>최종 제출
+                        <i class="fas fa-paper-plane me-1"></i>최종 ?�출
                     </button>
                 </div>
-                {% elif session['user_type'] == '평가자(임원)' %}
+                {% elif session['user_type'] == '?��????�원)' %}
                 {% for grade, grade_evaluatees in grade_groups.items() %}
                 <div class="grade-group mb-4">
-                    <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}명)</h6>
+                    <h6 class="text-primary mb-3">{{ grade }} 직급 ({{ grade_evaluatees|length }}�?</h6>
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <div class="alert alert-info"><strong>포인트 한도:</strong> 총 {{ grade_evaluatees|length * 85 }}점</div>
+                            <div class="alert alert-info"><strong>?�인???�도:</strong> �?{{ grade_evaluatees|length * 85 }}??/div>
                         </div>
                         <div class="col-md-6">
-                            <div class="alert alert-warning"><strong>남은 포인트:</strong> <span id="remaining-points-{{ grade }}">-</span></div>
+                            <div class="alert alert-warning"><strong>?��? ?�인??</strong> <span id="remaining-points-{{ grade }}">-</span></div>
                         </div>
                     </div>
                     {% for evaluatee in grade_evaluatees %}
@@ -559,23 +559,23 @@
                             <div class="col-md-6">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <label class="form-label">평가 점수</label>
-                                        <input type="number" class="form-control score-input" id="score-{{ evaluatee.id }}" min="65" max="105" step="1" placeholder="점수 입력">
+                                        <label class="form-label">?��? ?�수</label>
+                                        <input type="number" class="form-control score-input" id="score-{{ evaluatee.id }}" min="65" max="105" step="1" placeholder="?�수 ?�력">
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-2 text-end">
                                 <button type="button" class="btn btn-sm btn-performance-view" onclick="loadPerformance('{{ evaluatee.id }}')">
-                                    <i class="fas fa-eye me-1"></i>실적 조회
+                                    <i class="fas fa-eye me-1"></i>?�적 조회
                                 </button>
                             </div>
                         </div>
-                        <!-- 실적 표시 영역 추가 -->
+                        <!-- ?�적 ?�시 ?�역 추�? -->
                         <div id="performance-{{ evaluatee.id }}" class="mt-3"></div>
                         <div class="row mt-3">
                             <div class="col-12">
-                                <label class="form-label">평가 의견</label>
-                                <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="평가 의견을 작성해주세요"></textarea>
+                                <label class="form-label">?��? ?�견</label>
+                                <textarea class="form-control" id="comments-{{ evaluatee.id }}" rows="3" placeholder="?��? ?�견???�성?�주?�요"></textarea>
                             </div>
                         </div>
                     </div>
@@ -593,17 +593,17 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="fas fa-book me-2"></i>직급별 역할 정의
+                    <i class="fas fa-book me-2"></i>직급�???�� ?�의
                 </h5>
             </div>
             <div class="card-body text-center">
                 {% if jikkeup is not none and not jikkeup.empty %}
                 <button type="button" class="btn btn-primary btn-lg" onclick="showJobRoleDefinitions()">
-                    <i class="fas fa-eye me-2"></i>직급별 역할 정의 보기
+                    <i class="fas fa-eye me-2"></i>직급�???�� ?�의 보기
                 </button>
-                <p class="text-muted mt-2 small">클릭하여 각 직급의 역할 정의와 행동 지침을 확인하세요</p>
+                <p class="text-muted mt-2 small">?�릭?�여 �?직급????�� ?�의?� ?�동 지침을 ?�인?�세??/p>
                 
-                <!-- 숨겨진 직급별 역할 정의 데이터 -->
+                <!-- ?�겨�?직급�???�� ?�의 ?�이??-->
                 <div id="job-role-data" style="display: none;">
                     {% for _, row in jikkeup.iterrows() %}
                     <div class="job-role-item" 
@@ -614,7 +614,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p class="text-muted">직급별 역할 정의를 불러올 수 없습니다.</p>
+                <p class="text-muted">직급�???�� ?�의�?불러?????�습?�다.</p>
                 {% endif %}
             </div>
         </div>
@@ -622,13 +622,13 @@
     {% endif %}
 </div>
 
-<!-- 직급별 역할 정의 상세 모달 -->
+<!-- 직급�???�� ?�의 ?�세 모달 -->
 <div class="modal fade" id="jobDetailModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-book me-2"></i><span id="jobTitle"></span> 역할 정의
+                    <i class="fas fa-book me-2"></i><span id="jobTitle"></span> ??�� ?�의
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -636,7 +636,7 @@
                 <div id="jobDefinition"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">?�기</button>
             </div>
         </div>
     </div>
@@ -645,7 +645,7 @@
 
 {% block extra_js %}
 <script>
-// 합계 점수 업데이트 함수 (평가자(임원) 팀원 평가(관리직)용)
+// ?�계 ?�수 ?�데?�트 ?�수 (?��????�원) ?�???��?(관리직)??
 function updateTotalScore(evaluateeId) {
     const scoreInput = document.getElementById(`score-${evaluateeId}`);
     const totalSpan = document.getElementById(`total-${evaluateeId}`);
@@ -655,12 +655,12 @@ function updateTotalScore(evaluateeId) {
     const currentScore = parseInt(scoreInput.value) || 0;
     const beforePoint = parseInt(scoreInput.getAttribute('data-before-point')) || 0;
     
-    // 팀장 평가 점수 + 현재 평가 점수 = 합계
+    // ?�???��? ?�수 + ?�재 ?��? ?�수 = ?�계
     const totalScore = beforePoint + currentScore;
     
     totalSpan.textContent = totalScore;
     
-    // 합계 점수에 따른 색상 변경
+    // ?�계 ?�수???�른 ?�상 변�?
     const totalScoreDiv = document.getElementById(`total-score-${evaluateeId}`);
     if (totalScoreDiv) {
         const totalElement = totalScoreDiv.querySelector('small');
@@ -678,11 +678,11 @@ function updateTotalScore(evaluateeId) {
     }
 }
 
-// 실적 조회
+// ?�적 조회
 function loadPerformance(employeeId) {
-    console.log('실적 조회 시작:', employeeId);
+    console.log('?�적 조회 ?�작:', employeeId);
     
-    // 모든 가능한 ID 형식 시도
+    // 모든 가?�한 ID ?�식 ?�도
     const possibleIds = [
         'performance-' + employeeId,
         'performance-' + String(employeeId),
@@ -693,48 +693,48 @@ function loadPerformance(employeeId) {
     for (const id of possibleIds) {
         container = document.getElementById(id);
         if (container) {
-            console.log('찾은 컨테이너 ID:', id);
+            console.log('찾�? 컨테?�너 ID:', id);
             break;
         }
     }
     
     if (!container) {
-        console.error('컨테이너를 찾을 수 없습니다. 시도한 ID들:', possibleIds);
-        // 페이지의 모든 div 요소 출력
+        console.error('컨테?�너�?찾을 ???�습?�다. ?�도??ID??', possibleIds);
+        // ?�이지??모든 div ?�소 출력
         const allDivs = document.querySelectorAll('div[id^="performance-"]');
-        console.log('페이지의 performance-로 시작하는 모든 div:', allDivs);
+        console.log('?�이지??performance-�??�작?�는 모든 div:', allDivs);
         return;
     }
     
-    container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 로딩 중...</div>';
+    container.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> 로딩 �?..</div>';
     
     fetch('/get_performance/' + employeeId)
         .then(response => response.json())
         .then(data => {
-            console.log('받은 데이터:', data);
+            console.log('받�? ?�이??', data);
             
             if (data.success && data.data && data.data.length > 0) {
                 let html = '<div class="alert alert-info">';
                 data.data.forEach((perf, index) => {
                     if (index > 0) html += '<div class="border-top pt-3 mb-3"></div>';
-                    html += '<h6 class="mb-2"><i class="fas fa-list-ol me-1"></i>실적 ' + perf.order + '</h6>';
-                    html += '<p class="mb-1"><strong>과제명:</strong> ' + perf.project_name + '</p>';
+                    html += '<h6 class="mb-2"><i class="fas fa-list-ol me-1"></i>?�적 ' + perf.order + '</h6>';
+                    html += '<p class="mb-1"><strong>과제�?</strong> ' + perf.project_name + '</p>';
                     html += '<p class="mb-2" style="white-space: pre-line;">' + perf.performance + '</p>';
-                    html += '<small class="text-muted">작성일: ' + perf.created_at + '</small>';
+                    html += '<small class="text-muted">?�성?? ' + perf.created_at + '</small>';
                 });
                 html += '</div>';
                 container.innerHTML = html;
             } else {
-                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i>실적 데이터가 없습니다.</div>';
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-1"></i>?�적 ?�이?��? ?�습?�다.</div>';
             }
         })
         .catch(error => {
-            console.error('실적 조회 오류:', error);
-            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-1"></i>실적 조회 중 오류가 발생했습니다.</div>';
+            console.error('?�적 조회 ?�류:', error);
+            container.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle me-1"></i>?�적 조회 �??�류가 발생?�습?�다.</div>';
         });
 }
 
-// 절대평가 총점 계산
+// ?��??��? 총점 계산
 function calculateTotalScore(employeeId) {
     const radios = document.querySelectorAll(`input[name$="_${employeeId}"]:checked`);
     let total = 0;
@@ -744,19 +744,19 @@ function calculateTotalScore(employeeId) {
     document.getElementById(`total-score-${employeeId}`).textContent = total;
 }
 
-// 상대평가 점수 차이 계산 (제거됨 - 팀장 평가 대비 기능 제거)
+// ?��??��? ?�수 차이 계산 (?�거??- ?�???��? ?��?기능 ?�거)
 function calculateScoreDiff(employeeId) {
-    // 이 함수는 더 이상 사용되지 않습니다
-    // 팀장 평가 대비 기능이 제거되었습니다
+    // ???�수?????�상 ?�용?��? ?�습?�다
+    // ?�???��? ?��?기능???�거?�었?�니??
 }
 
-// 직급별 남은 포인트 계산
+// 직급�??��? ?�인??계산
 function calculateRemainingPoints() {
     const userType = '{{ session["user_type"] }}';
     const evaluationType = '{{ evaluation_type }}';
     
-    // 팀장의 대리이상 평가는 평면 리스트이므로 별도 처리
-    if (userType === '평가자(팀장)' && evaluationType === 'manager') {
+    // ?�?�의 ?�리이???��????�면 리스?�이므�?별도 처리
+    if (userType === '?��????�??' && evaluationType === 'manager') {
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 80;
         let usedPoints = 0;
@@ -785,20 +785,20 @@ function calculateRemainingPoints() {
         return;
     }
     
-    // 직급별 데이터를 JavaScript 객체로 전달
+    // 직급�??�이?��? JavaScript 객체�??�달
     const gradeGroups = {{ grade_groups|tojson }};
     
     Object.keys(gradeGroups).forEach(grade => {
         const gradeEvaluatees = gradeGroups[grade];
         let totalPoints = 0;
         
-        if (userType === '평가자(팀장)') {
+        if (userType === '?��????�??') {
             if (evaluationType === 'employee') {
-                totalPoints = gradeEvaluatees.length * 100; // 절대평가
+                totalPoints = gradeEvaluatees.length * 100; // ?��??��?
             } else if (evaluationType === 'manager') {
                 totalPoints = gradeEvaluatees.length * 80;
             }
-        } else if (userType === '평가자(임원)') {
+        } else if (userType === '?��????�원)') {
             if (evaluationType === 'team_leader') {
                 totalPoints = gradeEvaluatees.length * 90;
             } else if (evaluationType === 'manager') {
@@ -830,13 +830,13 @@ function calculateRemainingPoints() {
     });
 }
 
-// 포인트 한도 검증 함수
+// ?�인???�도 검�??�수
 function validatePointLimits(evaluationType) {
     const userType = '{{ session["user_type"] }}';
     
-    // 포인트 한도 검증이 필요한 경우만 확인
-    if (evaluationType === 'general' && userType === '평가자(팀장)') {
-        return true; // 팀장-일반직은 의견만 작성하므로 검증 불필요
+    // ?�인???�도 검증이 ?�요??경우�??�인
+    if (evaluationType === 'general' && userType === '?��????�??') {
+        return true; // ?�???�반직�? ?�견�??�성?��?�?검�?불필??
     }
     
     const gradeGroups = {{ grade_groups|tojson }};
@@ -846,14 +846,14 @@ function validatePointLimits(evaluationType) {
         let totalPoints = 0;
         let minPoint = 0, maxPoint = 100;
         
-        // 평가 타입별 포인트 한도 설정
-        if (userType === '평가자(팀장)') {
+        // ?��? ?�?�별 ?�인???�도 ?�정
+        if (userType === '?��????�??') {
             if (evaluationType === 'manager') {
                 totalPoints = gradeEvaluatees.length * 80;
                 minPoint = 65;
                 maxPoint = 95;
             }
-        } else if (userType === '평가자(임원)') {
+        } else if (userType === '?��????�원)') {
             if (evaluationType === 'team_leader') {
                 totalPoints = gradeEvaluatees.length * 90;
                 minPoint = 75;
@@ -872,16 +872,16 @@ function validatePointLimits(evaluationType) {
         let usedPoints = 0;
         let hasInvalidScore = false;
         
-        // 각 평가 대상자의 점수 확인
+        // �??��? ?�?�자???�수 ?�인
         for (const evaluatee of gradeEvaluatees) {
             const scoreElement = document.getElementById(`score-${evaluatee.id}`);
             if (!scoreElement) continue;
             
             const score = parseInt(scoreElement.value) || 0;
             
-            // 개인별 점수 한도 검증
+            // 개인�??�수 ?�도 검�?
             if (score < minPoint || score > maxPoint) {
-                alert(`${evaluatee.name}의 점수는 ${minPoint}점 이상 ${maxPoint}점 이하여야 합니다.`);
+                alert(`${evaluatee.name}???�수??${minPoint}???�상 ${maxPoint}???�하?�야 ?�니??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -891,9 +891,9 @@ function validatePointLimits(evaluationType) {
         
         if (hasInvalidScore) return false;
         
-        // 전체 포인트 한도 검증
+        // ?�체 ?�인???�도 검�?
         if (usedPoints !== totalPoints) {
-            alert(`${grade} 직급의 총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`${grade} 직급??�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return false;
         }
     }
@@ -901,37 +901,37 @@ function validatePointLimits(evaluationType) {
     return true;
 }
 
-// 평가 제출
+// ?��? ?�출
 function submitEvaluation(employeeId, evaluationType) {
     const userType = '{{ session["user_type"] }}';
     let scores = {};
     let comments = document.getElementById(`comments-${employeeId}`).value;
     
     if (evaluationType === 'employee') {
-        // 절대평가 데이터 수집
+        // ?��??��? ?�이???�집
         const radios = document.querySelectorAll(`input[name$="_${employeeId}"]:checked`);
         radios.forEach(radio => {
             scores[radio.name] = radio.value;
         });
-    } else if (evaluationType === 'general' && userType === '평가자(팀장)') {
-        // 팀장-일반직: 의견만 제출
+    } else if (evaluationType === 'general' && userType === '?��????�??') {
+        // ?�???�반�? ?�견�??�출
         scores = {};
     } else {
-        // 상대평가 데이터 수집 (임원 일반직 포함)
+        // ?��??��? ?�이???�집 (?�원 ?�반�??�함)
         const score = document.getElementById(`score-${employeeId}`).value;
         if (!score) {
-            alert('평가 점수를 입력해주세요.');
+            alert('?��? ?�수�??�력?�주?�요.');
             return;
         }
         
-        // 개별 점수 한도 검증
+        // 개별 ?�수 ?�도 검�?
         const scoreInt = parseInt(score, 10);
         let minPoint = 0, maxPoint = 100;
         
-        if (userType === '평가자(팀장)' && evaluationType === 'manager') {
+        if (userType === '?��????�??' && evaluationType === 'manager') {
             minPoint = 65;
             maxPoint = 95;
-        } else if (userType === '평가자(임원)') {
+        } else if (userType === '?��????�원)') {
             if (evaluationType === 'team_leader') {
                 minPoint = 75;
                 maxPoint = 105;
@@ -945,7 +945,7 @@ function submitEvaluation(employeeId, evaluationType) {
         }
         
         if (scoreInt < minPoint || scoreInt > maxPoint) {
-            alert(`점수는 ${minPoint}점 이상 ${maxPoint}점 이하여야 합니다.`);
+            alert(`?�수??${minPoint}???�상 ${maxPoint}???�하?�야 ?�니??`);
             return;
         }
         
@@ -969,19 +969,19 @@ function submitEvaluation(employeeId, evaluationType) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('평가가 저장되었습니다.');
+            alert('?��?가 ?�?�되?�습?�다.');
         } else {
-            alert('오류가 발생했습니다: ' + data.message);
+            alert('?�류가 발생?�습?�다: ' + data.message);
         }
     });
 }
 
-// 직급별 역할 정의 전체 보기
+// 직급�???�� ?�의 ?�체 보기
 function showJobRoleDefinitions() {
-    // 모달 내용을 전체 직급 정보로 설정
-    document.getElementById('jobTitle').textContent = '직급별 역할 정의';
+    // 모달 ?�용???�체 직급 ?�보�??�정
+    document.getElementById('jobTitle').textContent = '직급�???�� ?�의';
     
-    // 숨겨진 데이터에서 직급 정보 가져오기
+    // ?�겨�??�이?�에??직급 ?�보 가?�오�?
     const jobRoleItems = document.querySelectorAll('.job-role-item');
     let allJobInfo = '';
     
@@ -994,16 +994,16 @@ function showJobRoleDefinitions() {
         allJobInfo += '<h5 class="text-primary mb-3"><i class="fas fa-user-tie me-2"></i>' + title + '</h5>';
         allJobInfo += '<div class="row">';
         allJobInfo += '<div class="col-md-6">';
-        allJobInfo += '<h6 class="text-success mb-2"><i class="fas fa-bullseye me-1"></i>역할 정의</h6>';
+        allJobInfo += '<h6 class="text-success mb-2"><i class="fas fa-bullseye me-1"></i>??�� ?�의</h6>';
         allJobInfo += '<div class="border rounded p-3 mb-3 bg-light">';
         allJobInfo += '<p class="mb-0">' + definition + '</p>';
         allJobInfo += '</div>';
         allJobInfo += '</div>';
         allJobInfo += '<div class="col-md-6">';
-        allJobInfo += '<h6 class="text-info mb-2"><i class="fas fa-list-check me-1"></i>행동 지침</h6>';
+        allJobInfo += '<h6 class="text-info mb-2"><i class="fas fa-list-check me-1"></i>?�동 지�?/h6>';
         allJobInfo += '<div class="border rounded p-3 bg-light">';
         
-        // 행동 지침을 줄바꿈으로 분리
+        // ?�동 지침을 줄바꿈으�?분리
         const guidelineList = guidelines.split('\n');
         guidelineList.forEach(guideline => {
             if (guideline.trim()) {
@@ -1019,17 +1019,17 @@ function showJobRoleDefinitions() {
     
     document.getElementById('jobDefinition').innerHTML = allJobInfo;
     
-    // 모달 표시
+    // 모달 ?�시
     const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
     modal.show();
 }
 
-// 직급별 역할 정의 상세 정보 표시 (개별 직급)
+// 직급�???�� ?�의 ?�세 ?�보 ?�시 (개별 직급)
 function showJobDetail(jobTitle, jobDefinition, jobGuidelines) {
     document.getElementById('jobTitle').textContent = jobTitle;
     document.getElementById('jobDefinition').textContent = jobDefinition;
     
-    // 행동 지침을 줄바꿈으로 분리하여 리스트로 표시
+    // ?�동 지침을 줄바꿈으�?분리?�여 리스?�로 ?�시
     const guidelines = jobGuidelines.split('\n').filter(line => line.trim() !== '');
     let guidelinesHtml = '';
     guidelines.forEach(guideline => {
@@ -1039,14 +1039,14 @@ function showJobDetail(jobTitle, jobDefinition, jobGuidelines) {
     });
     document.getElementById('jobGuidelines').innerHTML = guidelinesHtml;
     
-    // 모달 표시
+    // 모달 ?�시
     const modal = new bootstrap.Modal(document.getElementById('jobDetailModal'));
     modal.show();
 }
 
-// 이벤트 리스너 등록
+// ?�벤??리스???�록
 document.addEventListener('DOMContentLoaded', function() {
-    // 절대평가 라디오 버튼 이벤트
+    // ?��??��? ?�디??버튼 ?�벤??
     const radios = document.querySelectorAll('input[type="radio"]');
     radios.forEach(radio => {
         radio.addEventListener('change', function() {
@@ -1055,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 상대평가 점수 입력 이벤트
+    // ?��??��? ?�수 ?�력 ?�벤??
     const scoreInputs = document.querySelectorAll('.score-input');
     scoreInputs.forEach(input => {
         input.addEventListener('input', function() {
@@ -1063,13 +1063,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // 초기 포인트 계산
+    // 초기 ?�인??계산
     if ('{{ evaluation_type }}' !== 'general') {
         calculateRemainingPoints();
     }
 });
 
-// 점수 조정 함수 (±15점)
+// ?�수 조정 ?�수 (±15??
 function adjustScore(employeeId, adjustment) {
     const scoreInput = document.getElementById(`score-${employeeId}`);
     if (!scoreInput) return;
@@ -1077,7 +1077,7 @@ function adjustScore(employeeId, adjustment) {
     let currentScore = parseInt(scoreInput.value) || 0;
     let newScore = currentScore + adjustment;
     
-    // 최소/최대 점수 제한
+    // 최소/최�? ?�수 ?�한
     const minScore = 65;
     const maxScore = 95;
     
@@ -1088,11 +1088,11 @@ function adjustScore(employeeId, adjustment) {
     }
     
     scoreInput.value = newScore;
-    calculateRemainingPoints(); // 남은 포인트 재계산
-    checkScoreDifference(employeeId); // 점수 차이 확인
+    calculateRemainingPoints(); // ?��? ?�인???�계??
+    checkScoreDifference(employeeId); // ?�수 차이 ?�인
 }
 
-// 점수 입력 시 직전 점수 대비 차이 확인
+// ?�수 ?�력 ??직전 ?�수 ?��?차이 ?�인
 function checkScoreDifference(employeeId) {
     const scoreInput = document.getElementById(`score-${employeeId}`);
     if (!scoreInput) return;
@@ -1103,22 +1103,22 @@ function checkScoreDifference(employeeId) {
     if (beforePoint > 0) {
         const difference = Math.abs(currentScore - beforePoint);
         if (difference >= 15) {
-            // 소명서 작성 안내 표시
+            // ?�명???�성 ?�내 ?�시
             const explanationDiv = document.getElementById(`explanation-${employeeId}`);
             if (explanationDiv) {
                 explanationDiv.style.display = 'block';
                 explanationDiv.innerHTML = `
                     <div class="alert alert-warning mt-2">
                         <i class="fas fa-exclamation-triangle me-1"></i>
-                        <strong>소명서 작성 필요</strong><br>
-                        직전 점수(${beforePoint}점) 대비 ${difference}점 차이가 발생했습니다.<br>
-                        소명서를 작성해주세요.<br>
-                        <small class="text-muted">(소명서 양식은 인사기획팀 문수한 대리에게 요청)</small>
+                        <strong>?�명???�성 ?�요</strong><br>
+                        직전 ?�수(${beforePoint}?? ?��?${difference}??차이가 발생?�습?�다.<br>
+                        ?�명?��? ?�성?�주?�요.<br>
+                        <small class="text-muted">(?�명???�식?� ?�사기획?� 문수???�리에�??�청)</small>
                     </div>
                 `;
             }
         } else {
-            // 소명서 안내 숨기기
+            // ?�명???�내 ?�기�?
             const explanationDiv = document.getElementById(`explanation-${employeeId}`);
             if (explanationDiv) {
                 explanationDiv.style.display = 'none';
@@ -1130,9 +1130,9 @@ function checkScoreDifference(employeeId) {
 function saveEvaluationsTemporary(evaluationType) {
     const userType = '{{ session["user_type"] }}';
     
-    // 팀장의 경우 포인트 한도 검증 추가
-    if (userType === '평가자(팀장)' && evaluationType === 'manager') {
-        // 팀장은 전체 평가자에 대해 포인트 한도 검증
+    // ?�?�의 경우 ?�인???�도 검�?추�?
+    if (userType === '?��????�??' && evaluationType === 'manager') {
+        // ?�?��? ?�체 ?��??�에 ?�???�인???�도 검�?
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 80;
         let usedPoints = 0;
@@ -1147,7 +1147,7 @@ function saveEvaluationsTemporary(evaluationType) {
             
             const score = parseInt(scoreEl.value);
             if (score < 65 || score > 95) {
-                alert(`점수는 65점 이상 95점 이하여야 합니다. (현재: ${score}점)`);
+                alert(`?�수??65???�상 95???�하?�야 ?�니?? (?�재: ${score}??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -1157,14 +1157,14 @@ function saveEvaluationsTemporary(evaluationType) {
         if (hasInvalidScore) return;
         
         if (usedPoints !== totalPoints) {
-            alert(`총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return;
         }
     }
     
-    // 임원의 팀장 평가 한도 검증 추가
-    if (userType === '평가자(임원)' && evaluationType === 'team_leader') {
-        // 임원은 전체 팀장에 대해 포인트 한도 검증
+    // ?�원???�???��? ?�도 검�?추�?
+    if (userType === '?��????�원)' && evaluationType === 'team_leader') {
+        // ?�원?� ?�체 ?�?�에 ?�???�인???�도 검�?
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 90;
         let usedPoints = 0;
@@ -1179,7 +1179,7 @@ function saveEvaluationsTemporary(evaluationType) {
             
             const score = parseInt(scoreEl.value);
             if (score < 75 || score > 105) {
-                alert(`점수는 75점 이상 105점 이하여야 합니다. (현재: ${score}점)`);
+                alert(`?�수??75???�상 105???�하?�야 ?�니?? (?�재: ${score}??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -1189,14 +1189,14 @@ function saveEvaluationsTemporary(evaluationType) {
         if (hasInvalidScore) return;
         
         if (usedPoints !== totalPoints) {
-            alert(`총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return;
         }
     }
     
-    // 임원의 팀원 평가(관리직) 한도 검증 추가
-    if (userType === '평가자(임원)' && evaluationType === 'manager') {
-        // 임원은 전체 관리직에 대해 포인트 한도 검증
+    // ?�원???�???��?(관리직) ?�도 검�?추�?
+    if (userType === '?��????�원)' && evaluationType === 'manager') {
+        // ?�원?� ?�체 관리직???�???�인???�도 검�?
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 5;
         let usedPoints = 0;
@@ -1211,7 +1211,7 @@ function saveEvaluationsTemporary(evaluationType) {
             
             const score = parseInt(scoreEl.value);
             if (score < 0 || score > 10) {
-                alert(`점수는 0점 이상 10점 이하여야 합니다. (현재: ${score}점)`);
+                alert(`?�수??0???�상 10???�하?�야 ?�니?? (?�재: ${score}??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -1221,14 +1221,14 @@ function saveEvaluationsTemporary(evaluationType) {
         if (hasInvalidScore) return;
         
         if (usedPoints !== totalPoints) {
-            alert(`총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return;
         }
     }
     
-    // 임원의 팀원 평가(일반직) 한도 검증 추가
-    if (userType === '평가자(임원)' && evaluationType === 'general') {
-        // 임원은 전체 일반직에 대해 포인트 한도 검증
+    // ?�원???�???��?(?�반�? ?�도 검�?추�?
+    if (userType === '?��????�원)' && evaluationType === 'general') {
+        // ?�원?� ?�체 ?�반직에 ?�???�인???�도 검�?
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 85;
         let usedPoints = 0;
@@ -1243,7 +1243,7 @@ function saveEvaluationsTemporary(evaluationType) {
             
             const score = parseInt(scoreEl.value);
             if (score < 65 || score > 105) {
-                alert(`점수는 65점 이상 105점 이하여야 합니다. (현재: ${score}점)`);
+                alert(`?�수??65???�상 105???�하?�야 ?�니?? (?�재: ${score}??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -1253,72 +1253,57 @@ function saveEvaluationsTemporary(evaluationType) {
         if (hasInvalidScore) return;
         
         if (usedPoints !== totalPoints) {
-            alert(`총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return;
         }
     }
     
-    // 평가자(팀장)는 개별 임시저장, 평가자(임원)는 일괄 임시저장
-    if (userType === '평가자(팀장)') {
-        // 개별 임시저장
+    // ?��????�????개별 ?�시?�?? ?��????�원)???�괄 ?�시?�??
+    if (userType === '?��????�??') {
+        // 개별 ?�시?�??
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let savedCount = 0;
         let totalCount = 0;
         
         items.forEach(el => {
-    let eid, scores = {}, commentsVal = '';
-    
-    if (evaluationType === 'employee') {
-        // 절대평가: ID에서 추출
-        eid = el.id.replace('evaluatee-', '');
-        // 라디오 버튼 데이터 수집
-        const radios = document.querySelectorAll(`input[name$="_${eid}"]:checked`);
-        radios.forEach(radio => {
-            scores[radio.name] = radio.value;
+            const eid = el.getAttribute('data-eid');
+            if (!eid) return;
+            const scoreEl = document.getElementById(`score-${eid}`);
+            const commentsEl = document.getElementById(`comments-${eid}`);
+            const scoreVal = scoreEl ? scoreEl.value : '';
+            const commentsVal = commentsEl ? commentsEl.value : '';
+            
+            totalCount++;
+            
+            fetch('/submit_evaluation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    evaluatee_id: eid,
+                    evaluation_type: evaluationType,
+                    scores: { score: scoreVal ? parseInt(scoreVal, 10) : 0 },
+                    comments: commentsVal || ''
+                })
+            }).then(r => r.json()).then(res => {
+                savedCount++;
+                if (res.success) {
+                    if (savedCount === totalCount) {
+                        alert(`�?${savedCount}건의 ?��?가 ?�시?�?�되?�습?�다.`);
+                    }
+                } else {
+                    alert(res.message || '?�시?�??�??�류가 발생?�습?�다.');
+                }
+            }).catch(err => {
+                alert('?�시?�??�??�류가 발생?�습?�다.');
+                console.error(err);
+            });
         });
-    } else {
-        // 상대평가: data-eid 속성 사용
-        eid = el.getAttribute('data-eid');
-        if (!eid) return;
-        const scoreEl = document.getElementById(`score-${eid}`);
-        const scoreVal = scoreEl ? scoreEl.value : '';
-        scores = { score: scoreVal ? parseInt(scoreVal, 10) : 0 };
-    }
-    
-    const commentsEl = document.getElementById(`comments-${eid}`);
-    commentsVal = commentsEl ? commentsEl.value : '';
-    
-    totalCount++;
-    
-    fetch('/submit_evaluation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            evaluatee_id: eid,
-            evaluation_type: evaluationType,
-            scores: scores,
-            comments: commentsVal || ''
-        })
-    }).then(r => r.json()).then(res => {
-        savedCount++;
-        if (res.success) {
-            if (savedCount === totalCount) {
-                alert(`총 ${savedCount}건의 평가가 임시저장되었습니다.`);
-            }
-        } else {
-            alert(res.message || '임시저장 중 오류가 발생했습니다.');
-        }
-    }).catch(err => {
-        alert('임시저장 중 오류가 발생했습니다.');
-        console.error(err);
-    });
-});
         
         if (totalCount === 0) {
-            alert('임시저장할 평가가 없습니다.');
+            alert('?�시?�?�할 ?��?가 ?�습?�다.');
         }
     } else {
-        // 임원의 경우 일괄 임시저장
+        // ?�원??경우 ?�괄 ?�시?�??
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         const evaluations = [];
         items.forEach(el => {
@@ -1337,7 +1322,7 @@ function saveEvaluationsTemporary(evaluationType) {
         });
         
         if (evaluations.length === 0) {
-            alert('임시저장할 평가가 없습니다.');
+            alert('?�시?�?�할 ?��?가 ?�습?�다.');
             return;
         }
         
@@ -1347,9 +1332,9 @@ function saveEvaluationsTemporary(evaluationType) {
             body: JSON.stringify({ evaluation_type: evaluationType, evaluations })
         }).then(r => r.json()).then(res => {
             if (res.success) {
-                alert(`총 ${res.count}건의 평가가 임시저장되었습니다.`);
+                alert(`�?${res.count}건의 ?��?가 ?�시?�?�되?�습?�다.`);
             } else {
-                alert(res.message || '임시저장 중 오류가 발생했습니다.');
+                alert(res.message || '?�시?�??�??�류가 발생?�습?�다.');
             }
         });
     }
@@ -1358,9 +1343,9 @@ function saveEvaluationsTemporary(evaluationType) {
 function submitEvaluationsBulk(evaluationType) {
     const userType = '{{ session["user_type"] }}';
     
-    // 팀장의 경우 포인트 한도 검증 방식이 다름 (평면 리스트)
-    if (userType === '평가자(팀장)' && evaluationType === 'manager') {
-        // 팀장은 전체 평가자에 대해 포인트 한도 검증
+    // ?�?�의 경우 ?�인???�도 검�?방식???�름 (?�면 리스??
+    if (userType === '?��????�??' && evaluationType === 'manager') {
+        // ?�?��? ?�체 ?��??�에 ?�???�인???�도 검�?
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let totalPoints = items.length * 80;
         let usedPoints = 0;
@@ -1375,7 +1360,7 @@ function submitEvaluationsBulk(evaluationType) {
             
             const score = parseInt(scoreEl.value);
             if (score < 65 || score > 95) {
-                alert(`점수는 65점 이상 95점 이하여야 합니다. (현재: ${score}점)`);
+                alert(`?�수??65???�상 95???�하?�야 ?�니?? (?�재: ${score}??`);
                 hasInvalidScore = true;
                 break;
             }
@@ -1385,47 +1370,31 @@ function submitEvaluationsBulk(evaluationType) {
         if (hasInvalidScore) return;
         
         if (usedPoints !== totalPoints) {
-            alert(`총 포인트는 ${totalPoints}점이어야 합니다. (현재: ${usedPoints}점)`);
+            alert(`�??�인?�는 ${totalPoints}?�이?�야 ?�니?? (?�재: ${usedPoints}??`);
             return;
         }
     } else {
-        // 임원의 경우 기존 검증 방식 사용
+        // ?�원??경우 기존 검�?방식 ?�용
         if (!validatePointLimits(evaluationType)) {
-            return; // 검증 실패 시 제출 중단
+            return; // 검�??�패 ???�출 중단
         }
     }
     
-    // 평가자(팀장)는 개별 제출, 평가자(임원)는 일괄 제출
-    if (userType === '평가자(팀장)') {
-        // 개별 제출
+    // ?��????�????개별 ?�출, ?��????�원)???�괄 ?�출
+    if (userType === '?��????�??') {
+        // 개별 ?�출
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         let submittedCount = 0;
         let totalCount = 0;
         
         items.forEach(el => {
-    let eid, scores = {}, commentsVal = '';
-    
-    if (evaluationType === 'employee') {
-        // 절대평가: ID에서 추출
-        eid = el.id.replace('evaluatee-', '');
-        // 라디오 버튼 데이터 수집
-        const radios = document.querySelectorAll(`input[name$="_${eid}"]:checked`);
-        if (radios.length === 0) return; // 라디오 버튼이 선택되지 않은 경우 제외
-        radios.forEach(radio => {
-            scores[radio.name] = radio.value;
-        });
-    } else {
-        // 상대평가: data-eid 속성 사용
-        eid = el.getAttribute('data-eid');
-        if (!eid) return;
-        const scoreEl = document.getElementById(`score-${eid}`);
-        const scoreVal = scoreEl ? scoreEl.value : '';
-        if (scoreVal === '') return; // 점수 없는 항목은 제외
-        scores = { score: parseInt(scoreVal, 10) };
-    }
-    
-    const commentsEl = document.getElementById(`comments-${eid}`);
-    commentsVal = commentsEl ? commentsEl.value : '';
+            const eid = el.getAttribute('data-eid');
+            if (!eid) return;
+            const scoreEl = document.getElementById(`score-${eid}`);
+            const commentsEl = document.getElementById(`comments-${eid}`);
+            const scoreVal = scoreEl ? scoreEl.value : '';
+            const commentsVal = commentsEl ? commentsEl.value : '';
+            if (scoreVal === '') return; // ?�수 ?�는 ??��?� ?�외
             
             totalCount++;
             
@@ -1442,22 +1411,22 @@ function submitEvaluationsBulk(evaluationType) {
                 submittedCount++;
                 if (res.success) {
                     if (submittedCount === totalCount) {
-                        alert(`총 ${submittedCount}건의 평가가 제출되었습니다.`);
+                        alert(`�?${submittedCount}건의 ?��?가 ?�출?�었?�니??`);
                     }
                 } else {
-                    alert(res.message || '제출 중 오류가 발생했습니다.');
+                    alert(res.message || '?�출 �??�류가 발생?�습?�다.');
                 }
             }).catch(err => {
-                alert('제출 중 오류가 발생했습니다.');
+                alert('?�출 �??�류가 발생?�습?�다.');
                 console.error(err);
             });
         });
         
         if (totalCount === 0) {
-            alert('제출할 평가가 없습니다. 점수를 입력하세요.');
+            alert('?�출???��?가 ?�습?�다. ?�수�??�력?�세??');
         }
     } else {
-        // 임원의 경우 일괄 제출
+        // ?�원??경우 ?�괄 ?�출
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         const evaluations = [];
         items.forEach(el => {
@@ -1467,7 +1436,7 @@ function submitEvaluationsBulk(evaluationType) {
             const commentsEl = document.getElementById(`comments-${eid}`);
             const scoreVal = scoreEl ? scoreEl.value : '';
             const commentsVal = commentsEl ? commentsEl.value : '';
-            if (scoreVal === '') return; // 점수 없는 항목은 제외
+            if (scoreVal === '') return; // ?�수 ?�는 ??��?� ?�외
             evaluations.push({
                 evaluatee_id: eid,
                 scores: { score: parseInt(scoreVal, 10) },
@@ -1475,7 +1444,7 @@ function submitEvaluationsBulk(evaluationType) {
             });
         });
         if (evaluations.length === 0) {
-            alert('제출할 평가가 없습니다. 점수를 입력하세요.');
+            alert('?�출???��?가 ?�습?�다. ?�수�??�력?�세??');
             return;
         }
         fetch('/submit_evaluations_bulk', {
@@ -1484,21 +1453,21 @@ function submitEvaluationsBulk(evaluationType) {
             body: JSON.stringify({ evaluation_type: evaluationType, evaluations })
         }).then(r => r.json()).then(res => {
             if (res.success) {
-                alert(`총 ${res.count}건의 평가가 제출되었습니다.`);
+                alert(`�?${res.count}건의 ?��?가 ?�출?�었?�니??`);
             } else {
-                alert(res.message || '제출 중 오류가 발생했습니다.');
+                alert(res.message || '?�출 �??�류가 발생?�습?�다.');
             }
         });
     }
 }
 
-// 페이지 로드 시 초기화
+// ?�이지 로드 ??초기??
 document.addEventListener('DOMContentLoaded', function() {
-    // 평가자(임원)의 팀원 평가(관리직)에서 초기 합계 점수 표시
+    // ?��????�원)???�???��?(관리직)?�서 초기 ?�계 ?�수 ?�시
     const userType = '{{ session["user_type"] }}';
     const evaluationType = '{{ evaluation_type }}';
     
-    if (userType === '평가자(임원)' && evaluationType === 'manager') {
+    if (userType === '?��????�원)' && evaluationType === 'manager') {
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         items.forEach(el => {
             const eid = el.getAttribute('data-eid');

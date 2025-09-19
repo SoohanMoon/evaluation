@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}관리자 대시보드{% endblock %}
+
+{% block content %}
+<div class="user-info">
+    <div class="row">
+        <div class="col-md-3">
+            <h6><i class="fas fa-user me-2"></i>이름</h6>
+            <p class="mb-0">{{ user_data.name }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-building me-2"></i>소속</h6>
+            <p class="mb-0">{{ user_data.team }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-id-badge me-2"></i>직위</h6>
+            <p class="mb-0">{{ user_data.position }}</p>
+        </div>
+        <div class="col-md-3">
+            <h6><i class="fas fa-star me-2"></i>직급</h6>
+            <p class="mb-0">{{ user_data.grade }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-primary mb-3"></i>
+                <h4 class="text-primary">0</h4>
+                <p class="text-muted mb-0">전체 직원</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clipboard-check fa-3x text-success mb-3"></i>
+                <h4 class="text-success">0</h4>
+                <p class="text-muted mb-0">평가 완료</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                <h4 class="text-warning">0</h4>
+                <p class="text-muted mb-0">평가 진행중</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h4 class="text-danger">0</h4>
+                <p class="text-muted mb-0">미평가</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>평가 현황
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>평가 유형</th>
+                                <th>전체</th>
+                                <th>완료</th>
+                                <th>진행중</th>
+                                <th>미평가</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>피평가자 실적</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>팀장 평가</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>팀원 평가</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tools me-2"></i>관리 기능
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <a href="#" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-download me-1"></i>결과 다운로드
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="#" class="btn btn-outline-success w-100">
+                            <i class="fas fa-chart-bar me-1"></i>통계 분석
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="#" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-cog me-1"></i>시스템 설정
+                        </a>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <a href="#" class="btn btn-outline-info w-100">
+                            <i class="fas fa-users-cog me-1"></i>사용자 관리
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>최근 알림
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    현재 평가 기간이 설정되지 않았습니다. 평가 기간을 설정해주세요.
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>날짜</th>
+                                <th>알림 내용</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">
+                                    <i class="fas fa-inbox me-2"></i>최근 알림이 없습니다.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>관리자 안내</h6>
+            <ul class="mb-0">
+                <li>평가 기간 설정 및 관리가 필요합니다.</li>
+                <li>평가 결과 분석 및 보고서 생성이 가능합니다.</li>
+                <li>시스템 사용자 관리 및 권한 설정이 가능합니다.</li>
+                <li>평가 데이터 백업 및 복원이 가능합니다.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %} 
