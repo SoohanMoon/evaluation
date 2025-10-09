@@ -975,16 +975,16 @@ def reset_performance(employee_id):
     flash(f'피평가자 {employee_id}의 실적 데이터 {deleted_count}건이 초기화되었습니다.', 'success')
     return redirect(url_for('dashboard'))
 
+# Railway 배포를 위한 헬스체크 엔드포인트 추가
+@app.route('/health')
+def health_check():
+    """Railway 헬스체크용 엔드포인트"""
+    return 'OK', 200
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
     # Railway 배포 시 debug=False로 설정
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
-
-# Railway 배포를 위한 헬스체크 엔드포인트 추가
-@app.route('/health')
-def health_check():
-    """Railway 헬스체크용 엔드포인트"""
-    return 'OK', 200
 
