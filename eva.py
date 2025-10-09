@@ -183,8 +183,7 @@ def init_db():
             pass
         
         commit_db(conn)
-        commit_db(conn)
-    conn.close()
+        conn.close()
     else:
         # SQLite
         cursor = conn.cursor()
