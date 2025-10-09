@@ -1,1 +1,1 @@
-web: python eva.py 
+web: gunicorn eva:app

@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 import pandas as pd
 import json
 import os
 from datetime import datetime
 import sqlite3
+import io
 
 # Heroku PostgreSQL 지원
 try:
@@ -156,9 +157,17 @@ def init_db():
             evaluation_type TEXT NOT NULL,
             scores TEXT,
             comments TEXT,
+            is_final INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # 기존 테이블에 is_final 컬럼 추가 (없는 경우에만)
+    try:
+        cursor.execute('ALTER TABLE evaluation_data ADD COLUMN is_final INTEGER DEFAULT 0')
+    except sqlite3.OperationalError:
+        # 컬럼이 이미 존재하는 경우 무시
+        pass
     
     conn.commit()
     conn.close()
@@ -281,7 +290,100 @@ def dashboard():
     elif user_type == "평가자(임원)":
         return render_template('executive_dashboard.html', user_data=user_data)
     elif user_type == "관리자(인사담당자)":
-        return render_template('admin_dashboard.html', user_data=user_data)
+        # 관리자는 모든 평가 데이터 조회
+        conn = sqlite3.connect('evaluation.db')
+        cursor = conn.cursor()
+        
+        # 모든 평가 데이터 조회
+        cursor.execute('''
+            SELECT ed.evaluator_id, ed.evaluatee_id, ed.evaluation_type, ed.scores, ed.comments, ed.created_at
+            FROM evaluation_data ed
+            ORDER BY ed.created_at DESC
+        ''')
+        
+        evaluations = cursor.fetchall()
+        
+        # 모든 실적 데이터 조회
+        cursor.execute('''
+            SELECT pd.employee_id, pd.performance_order, pd.project_name, pd.performance, pd.created_at, pd.is_finalized
+            FROM performance_data pd
+            ORDER BY pd.employee_id, pd.performance_order
+        ''')
+        
+        performance_data = cursor.fetchall()
+        
+        # 평가자별로 그룹화 (사용자 정보는 평가 데이터에서 직접 처리)
+        evaluator_stats = {}
+        for eval_data in evaluations:
+            evaluator_id = eval_data[0]
+            evaluatee_id = eval_data[1]
+            eval_type = eval_data[2]
+            scores = eval_data[3]
+            comments = eval_data[4]
+            created_at = eval_data[5]
+            
+            if evaluator_id not in evaluator_stats:
+                evaluator_stats[evaluator_id] = {
+                    'info': {
+                        'name': f'평가자 {evaluator_id}',
+                        'team': 'Unknown',
+                        'position': 'Unknown',
+                        'grade': 'Unknown'
+                    },
+                    'evaluations': {}
+                }
+            
+            if eval_type not in evaluator_stats[evaluator_id]['evaluations']:
+                evaluator_stats[evaluator_id]['evaluations'][eval_type] = []
+            
+            # 피평가자 정보를 더 자세히 표시 (실제 이름이 있다면 사용, 없으면 사번만)
+            evaluatee_name = f'사번 {evaluatee_id}'
+            # 실제 사용자 데이터가 있다면 이름을 가져올 수 있도록 확장 가능
+            
+            evaluator_stats[evaluator_id]['evaluations'][eval_type].append({
+                'evaluatee_id': evaluatee_id,
+                'evaluatee_name': evaluatee_name,
+                'evaluatee_team': 'Unknown',
+                'evaluatee_position': 'Unknown',
+                'scores': scores,
+                'comments': comments,
+                'created_at': created_at
+            })
+        
+        # 실적 데이터를 피평가자별로 그룹화
+        performance_stats = {}
+        for perf_data in performance_data:
+            employee_id = perf_data[0]
+            performance_order = perf_data[1]
+            project_name = perf_data[2]
+            performance = perf_data[3]
+            created_at = perf_data[4]
+            is_finalized = perf_data[5]
+            
+            if employee_id not in performance_stats:
+                performance_stats[employee_id] = {
+                    'info': {
+                        'name': f'피평가자 {employee_id}',
+                        'team': 'Unknown',
+                        'position': 'Unknown'
+                    },
+                    'performances': []
+                }
+            
+            performance_stats[employee_id]['performances'].append({
+                'order': performance_order,
+                'project_name': project_name,
+                'performance': performance,
+                'created_at': created_at,
+                'is_finalized': is_finalized
+            })
+        
+        conn.close()
+        
+        return render_template('admin_dashboard.html', 
+                             user_data=user_data, 
+                             evaluator_stats=evaluator_stats,
+                             performance_stats=performance_stats)
 
 @app.route('/performance', methods=['GET', 'POST'])
 def performance():
@@ -429,14 +531,18 @@ def evaluate(evaluation_type):
                 
                 # 평가자(임원)의 팀원 평가(관리직)인 경우, 팀장 평가 점수를 가져오기
                 if session['user_type'] == "평가자(임원)" and evaluation_type == "manager":
+                    # 팀장의 평가자 ID들 (평가자(팀장)_대리이상.csv에서 가져온 ID들)
+                    team_leader_ids = [11050121, 11980036, 11040086, 11080043, 11040050, 11010060]
+                    
                     # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
                     conn = sqlite3.connect('evaluation.db')
                     cursor = conn.cursor()
                     cursor.execute('''
                         SELECT scores FROM evaluation_data 
-                        WHERE evaluatee_id = ? AND evaluation_type = 'manager'
+                        WHERE evaluatee_id = ? AND evaluation_type = 'manager' 
+                        AND evaluator_id IN ({})
                         ORDER BY created_at DESC LIMIT 1
-                    ''', (evaluatee_id,))
+                    '''.format(','.join(map(str, team_leader_ids))), (evaluatee_id,))
                     result = cursor.fetchone()
                     conn.close()
                     
@@ -478,6 +584,24 @@ def evaluate(evaluation_type):
             if grade not in grade_groups:
                 grade_groups[grade] = []
             grade_groups[grade].append(evaluatee)
+        
+        # 평가자(임원)의 팀원 평가(관리직)에서 직급 순서 조정: Professional → Manager4 → Manager3 → Manager2 → Manager1
+        if evaluation_type == 'manager':
+            # 원하는 순서대로 직급 정의
+            grade_order = ['Professional', 'Manager4', 'Manager3', 'Manager2', 'Manager1']
+            
+            # 새로운 순서로 grade_groups 재정렬
+            new_grade_groups = {}
+            for grade in grade_order:
+                if grade in grade_groups:
+                    new_grade_groups[grade] = grade_groups[grade]
+            
+            # 정의된 순서에 없는 직급들도 추가 (기타 직급들)
+            for grade in grade_groups.keys():
+                if grade not in grade_order:
+                    new_grade_groups[grade] = grade_groups[grade]
+            
+            grade_groups = new_grade_groups
  
     return render_template('evaluate.html', 
                          user_data=user_data, 
@@ -511,17 +635,17 @@ def submit_evaluation():
     existing = cursor.fetchone()
     
     if existing:
-        # 기존 평가 업데이트
+        # 기존 평가 업데이트 (임시저장이므로 is_final=0)
         cursor.execute('''
             UPDATE evaluation_data 
-            SET scores = ?, comments = ?, created_at = CURRENT_TIMESTAMP
+            SET scores = ?, comments = ?, is_final = 0, created_at = CURRENT_TIMESTAMP
             WHERE evaluator_id = ? AND evaluatee_id = ? AND evaluation_type = ?
         ''', (json.dumps(scores, ensure_ascii=False), comments, evaluator_id, evaluatee_id, evaluation_type))
     else:
-        # 새 평가 등록
+        # 새 평가 등록 (임시저장이므로 is_final=0)
         cursor.execute('''
-            INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments, is_final)
+            VALUES (?, ?, ?, ?, ?, 0)
         ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
     conn.commit()
@@ -562,18 +686,113 @@ def submit_evaluations_bulk():
         if row:
             cursor.execute('''
                 UPDATE evaluation_data
-                SET scores = ?, comments = ?, created_at = CURRENT_TIMESTAMP
+                SET scores = ?, comments = ?, is_final = 0, created_at = CURRENT_TIMESTAMP
                 WHERE id = ?
             ''', (json.dumps(scores, ensure_ascii=False), comments, row[0]))
         else:
             cursor.execute('''
-                INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments, is_final)
+                VALUES (?, ?, ?, ?, ?, 0)
             ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
     conn.commit()
     conn.close()
     return jsonify({'success': True, 'count': len(evaluations)})
+
+@app.route('/finalize_evaluation', methods=['POST'])
+def finalize_evaluation():
+    """최종제출 처리"""
+    if 'user_type' not in session or session['user_type'] not in ["평가자(팀장)", "평가자(임원)"]:
+        return jsonify({'success': False, 'message': '권한이 없습니다.'})
+    
+    data = request.get_json()
+    evaluator_id = session['user_data']['id']
+    evaluation_type = data['evaluation_type']
+    
+    print(f"Finalizing evaluation: evaluator_id={evaluator_id}, evaluation_type={evaluation_type}")
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 해당 평가자의 해당 평가 유형의 모든 임시저장 데이터를 최종제출로 변경
+    cursor.execute('''
+        UPDATE evaluation_data 
+        SET is_final = 1, created_at = CURRENT_TIMESTAMP
+        WHERE evaluator_id = ? AND evaluation_type = ? AND is_final = 0
+    ''', (evaluator_id, evaluation_type))
+    
+    updated_count = cursor.rowcount
+    print(f"Updated {updated_count} records to final")
+    
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'success': True, 'message': '최종제출이 완료되었습니다.', 'updated_count': updated_count})
+
+@app.route('/check_final_submit_status/<evaluation_type>')
+def check_final_submit_status(evaluation_type):
+    """최종제출 상태 확인"""
+    if 'user_type' not in session or session['user_type'] not in ["평가자(팀장)", "평가자(임원)"]:
+        return jsonify({'success': False, 'message': '권한이 없습니다.'})
+    
+    evaluator_id = session['user_data']['id']
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 최종제출 상태 확인 (is_final=1인 데이터가 있으면 최종제출된 것으로 간주)
+    cursor.execute('''
+        SELECT COUNT(*) FROM evaluation_data 
+        WHERE evaluator_id = ? AND evaluation_type = ? AND is_final = 1
+    ''', (evaluator_id, evaluation_type))
+    
+    count = cursor.fetchone()[0]
+    conn.close()
+    
+    is_finalized = count > 0
+    
+    return jsonify({
+        'success': True, 
+        'is_finalized': is_finalized,
+        'message': '최종제출 완료' if is_finalized else '미제출'
+    })
+
+@app.route('/get_saved_evaluation/<evaluation_type>')
+def get_saved_evaluation(evaluation_type):
+    """저장된 평가 데이터 조회"""
+    if 'user_type' not in session or session['user_type'] not in ["평가자(팀장)", "평가자(임원)"]:
+        return jsonify({'success': False, 'message': '권한이 없습니다.'})
+    
+    evaluator_id = session['user_data']['id']
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT evaluatee_id, scores, comments, created_at 
+        FROM evaluation_data 
+        WHERE evaluator_id = ? AND evaluation_type = ?
+        ORDER BY created_at DESC
+    ''', (evaluator_id, evaluation_type))
+    saved_evaluations = cursor.fetchall()
+    conn.close()
+    
+    evaluations = {}
+    for row in saved_evaluations:
+        evaluatee_id = str(row[0])
+        try:
+            scores = json.loads(row[1]) if row[1] else {}
+        except:
+            scores = {}
+        comments = row[2] or ''
+        created_at = row[3]
+        
+        evaluations[evaluatee_id] = {
+            'scores': scores,
+            'comments': comments,
+            'created_at': created_at
+        }
+    
+    return jsonify({'success': True, 'data': evaluations})
 
 @app.route('/get_performance/<employee_id>')
 def get_performance(employee_id):
@@ -613,7 +832,151 @@ def get_performance(employee_id):
         print(f"반환할 결과: {result}")
         return jsonify(result)
 
+@app.route('/download_excel')
+def download_excel():
+    """평가 데이터를 엑셀 파일로 다운로드"""
+    if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
+        return redirect(url_for('login'))
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 모든 평가 데이터 조회
+    cursor.execute('''
+        SELECT ed.evaluator_id, ed.evaluatee_id, ed.evaluation_type, ed.scores, ed.comments, ed.created_at
+        FROM evaluation_data ed
+        ORDER BY ed.created_at DESC
+    ''')
+    
+    evaluations = cursor.fetchall()
+    conn.close()
+    
+    # 데이터를 DataFrame으로 변환
+    data = []
+    for eval_data in evaluations:
+        evaluator_id = eval_data[0]
+        evaluatee_id = eval_data[1]
+        eval_type = eval_data[2]
+        scores = eval_data[3]
+        comments = eval_data[4]
+        created_at = eval_data[5]
+        
+        # 평가 유형 한글 변환
+        eval_type_korean = {
+            'employee': '사원 평가',
+            'manager': '관리직 평가',
+            'general': '일반직 평가',
+            'team_leader': '팀장 평가'
+        }.get(eval_type, eval_type)
+        
+        # 점수 파싱 (JSON 문자열인 경우)
+        try:
+            if scores:
+                scores_dict = json.loads(scores) if isinstance(scores, str) else scores
+                if eval_type == 'employee':
+                    # 사원 평가는 합계만 표시
+                    if isinstance(scores_dict, dict) and 'total' in scores_dict:
+                        scores_str = f"합계: {scores_dict['total']}"
+                    else:
+                        scores_str = f"합계: {scores}"
+                else:
+                    # 다른 평가는 전체 점수 표시
+                    scores_str = ', '.join([f"{k}: {v}" for k, v in scores_dict.items()])
+            else:
+                scores_str = "점수 없음"
+        except:
+            scores_str = str(scores) if scores else "점수 없음"
+        
+        data.append({
+            '평가자 ID': evaluator_id,
+            '평가자명': f'평가자 {evaluator_id}',
+            '피평가자 ID': evaluatee_id,
+            '피평가자명': f'피평가자 {evaluatee_id}',
+            '평가 유형': eval_type_korean,
+            '평가 점수': scores_str,
+            '평가 코멘트': comments if comments else '',
+            '평가 일시': created_at
+        })
+    
+    # DataFrame 생성
+    df = pd.DataFrame(data)
+    
+    # 엑셀 파일 생성
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='평가데이터', index=False)
+    
+    output.seek(0)
+    
+    # 파일명에 현재 날짜 포함
+    current_date = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'evaluation_data_{current_date}.xlsx'
+    
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response
+
+@app.route('/reset_evaluations')
+def reset_evaluations():
+    """평가 데이터 초기화 (관리자만 가능)"""
+    if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
+        return redirect(url_for('login'))
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 모든 평가 데이터 삭제
+    cursor.execute('DELETE FROM evaluation_data')
+    
+    conn.commit()
+    conn.close()
+    
+    flash('모든 평가 데이터가 초기화되었습니다.', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/reset_evaluator/<evaluator_id>')
+def reset_evaluator(evaluator_id):
+    """특정 평가자의 평가 데이터 초기화 (관리자만 가능)"""
+    if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
+        return redirect(url_for('login'))
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 특정 평가자의 평가 데이터 삭제
+    cursor.execute('DELETE FROM evaluation_data WHERE evaluator_id = ?', (evaluator_id,))
+    deleted_count = cursor.rowcount
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f'평가자 {evaluator_id}의 평가 데이터 {deleted_count}건이 초기화되었습니다.', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/reset_performance/<employee_id>')
+def reset_performance(employee_id):
+    """특정 피평가자의 실적 데이터 초기화 (관리자만 가능)"""
+    if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
+        return redirect(url_for('login'))
+    
+    conn = sqlite3.connect('evaluation.db')
+    cursor = conn.cursor()
+    
+    # 특정 피평가자의 실적 데이터 삭제
+    cursor.execute('DELETE FROM performance_data WHERE employee_id = ?', (employee_id,))
+    deleted_count = cursor.rowcount
+    
+    conn.commit()
+    conn.close()
+    
+    flash(f'피평가자 {employee_id}의 실적 데이터 {deleted_count}건이 초기화되었습니다.', 'success')
+    return redirect(url_for('dashboard'))
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    # Railway 배포 시 debug=False로 설정
+    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)

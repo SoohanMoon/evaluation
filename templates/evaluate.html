@@ -175,7 +175,13 @@
     {% if session['user_type'] == '평가자(팀장)' %}
     <p class="mb-0">일반직 평가는 평가 의견만 작성하시면 됩니다. 점수 입력은 필요하지 않습니다.</p>
     {% elif session['user_type'] == '평가자(임원)' %}
+        {% if evaluation_type == 'team_leader' %}
+    <p class="mb-0">상대평가: 인원수 × 90 포인트, 인당 최소 75점, 최대 105점</p>
+        {% elif evaluation_type == 'general' %}
     <p class="mb-0">상대평가: 인원수 × 85 포인트, 인당 최소 65점, 최대 105점</p>
+        {% elif evaluation_type == 'manager' %}
+    <p class="mb-0">상대평가: 인원수 × 5 포인트, 인당 최소 0점, 최대 10점</p>
+        {% endif %}
     {% endif %}
 </div>
 {% endif %}
@@ -376,7 +382,7 @@
                             <div class="alert alert-info">
                                 <strong>포인트 한도:</strong> 
                                 {% if evaluation_type == 'team_leader' %}
-                                    인원수 × 85 포인트, 인당 최대 105점, 최소 75점
+                                    인원수 × 90 포인트, 인당 최대 105점, 최소 75점
                                 {% elif evaluation_type == 'manager' %}
                                     인원수 × 5 포인트, 인당 최대 10점, 최소 0점
                                 {% endif %}
@@ -395,7 +401,7 @@
                             <div class="col-md-4">
                                 <h6 class="mb-1">{{ evaluatee.name }}</h6>
                                 <small class="text-muted">{{ evaluatee.team }} | {{ evaluatee.position }}</small>
-                                {% if evaluatee.before_point %}
+                                {% if evaluation_type == 'manager' and evaluatee.before_point %}
                                 <div class="mt-1">
                                     <small class="text-info">팀장 평가: {{ evaluatee.before_point }}점</small>
                                 </div>
@@ -407,11 +413,12 @@
                                         <label class="form-label">평가 점수</label>
                                         <input type="number" class="form-control score-input" id="score-{{ evaluatee.id }}" 
                                                min="0" max="105" step="1" placeholder="점수 입력"
-                                               data-before-point="{{ evaluatee.before_point or 0 }}"
-                                               oninput="updateTotalScore('{{ evaluatee.id }}')">
+                                               {% if evaluation_type == 'manager' %}data-before-point="{{ evaluatee.before_point or 0 }}" oninput="updateTotalScore('{{ evaluatee.id }}')"{% endif %}>
+                                        {% if evaluation_type == 'manager' %}
                                         <div id="total-score-{{ evaluatee.id }}" class="mt-1">
                                             <small class="text-success"><strong>합계: <span id="total-{{ evaluatee.id }}">0</span>점</strong></small>
                                         </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1266,53 +1273,56 @@ function saveEvaluationsTemporary(evaluationType) {
         let totalCount = 0;
         
         items.forEach(el => {
-    let eid, scores = {}, commentsVal = '';
-    
-    if (evaluationType === 'employee') {
-        // 절대평가: ID에서 추출
-        eid = el.id.replace('evaluatee-', '');
-        // 라디오 버튼 데이터 수집
-        const radios = document.querySelectorAll(`input[name$="_${eid}"]:checked`);
-        radios.forEach(radio => {
-            scores[radio.name] = radio.value;
-        });
-    } else {
-        // 상대평가: data-eid 속성 사용
-        eid = el.getAttribute('data-eid');
-        if (!eid) return;
-        const scoreEl = document.getElementById(`score-${eid}`);
-        const scoreVal = scoreEl ? scoreEl.value : '';
-        scores = { score: scoreVal ? parseInt(scoreVal, 10) : 0 };
-    }
-    
-    const commentsEl = document.getElementById(`comments-${eid}`);
-    commentsVal = commentsEl ? commentsEl.value : '';
-    
-    totalCount++;
-    
-    fetch('/submit_evaluation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            evaluatee_id: eid,
-            evaluation_type: evaluationType,
-            scores: scores,
-            comments: commentsVal || ''
-        })
-    }).then(r => r.json()).then(res => {
-        savedCount++;
-        if (res.success) {
-            if (savedCount === totalCount) {
-                alert(`총 ${savedCount}건의 평가가 임시저장되었습니다.`);
+            let eid, scores = {}, commentsVal = '';
+            
+            if (evaluationType === 'employee') {
+                // 절대평가: ID에서 추출
+                eid = el.id.replace('evaluatee-', '');
+                // 라디오 버튼 데이터 수집
+                const radios = document.querySelectorAll(`input[name$="_${eid}"]:checked`);
+                radios.forEach(radio => {
+                    scores[radio.name] = radio.value;
+                });
+            } else {
+                // 상대평가: data-eid 속성 사용
+                eid = el.getAttribute('data-eid');
+                if (!eid) return;
+                const scoreEl = document.getElementById(`score-${eid}`);
+                const scoreVal = scoreEl ? scoreEl.value : '';
+                scores = { score: scoreVal ? parseInt(scoreVal, 10) : 0 };
             }
-        } else {
-            alert(res.message || '임시저장 중 오류가 발생했습니다.');
-        }
-    }).catch(err => {
-        alert('임시저장 중 오류가 발생했습니다.');
-        console.error(err);
-    });
-});
+            
+            // eid가 있는 경우에만 처리
+            if (eid) {
+                const commentsEl = document.getElementById(`comments-${eid}`);
+                commentsVal = commentsEl ? commentsEl.value : '';
+                
+                totalCount++;
+                
+                fetch('/submit_evaluation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        evaluatee_id: eid,
+                        evaluation_type: evaluationType,
+                        scores: scores,
+                        comments: commentsVal || ''
+                    })
+                }).then(r => r.json()).then(res => {
+                    savedCount++;
+                    if (res.success) {
+                        if (savedCount === totalCount) {
+                            alert(`총 ${savedCount}건의 평가가 임시저장되었습니다.`);
+                        }
+                    } else {
+                        alert(res.message || '임시저장 중 오류가 발생했습니다.');
+                    }
+                }).catch(err => {
+                    alert('임시저장 중 오류가 발생했습니다.');
+                    console.error(err);
+                });
+            }
+        });
         
         if (totalCount === 0) {
             alert('임시저장할 평가가 없습니다.');
@@ -1322,16 +1332,31 @@ function saveEvaluationsTemporary(evaluationType) {
         const items = evaluationType === 'employee' ? document.querySelectorAll('.evaluation-card') : document.querySelectorAll('.evaluatee-item');
         const evaluations = [];
         items.forEach(el => {
-            const eid = el.getAttribute('data-eid');
-            if (!eid) return;
-            const scoreEl = document.getElementById(`score-${eid}`);
+            let eid, scores = {}, commentsVal = '';
+            
+            if (evaluationType === 'employee') {
+                // 절대평가: ID에서 추출
+                eid = el.id.replace('evaluatee-', '');
+                // 라디오 버튼 데이터 수집
+                const radios = document.querySelectorAll(`input[name$="_${eid}"]:checked`);
+                radios.forEach(radio => {
+                    scores[radio.name] = radio.value;
+                });
+            } else {
+                // 상대평가: data-eid 속성 사용
+                eid = el.getAttribute('data-eid');
+                if (!eid) return;
+                const scoreEl = document.getElementById(`score-${eid}`);
+                const scoreVal = scoreEl ? scoreEl.value : '';
+                scores = { score: scoreVal ? parseInt(scoreVal, 10) : 0 };
+            }
+            
             const commentsEl = document.getElementById(`comments-${eid}`);
-            const scoreVal = scoreEl ? scoreEl.value : '';
-            const commentsVal = commentsEl ? commentsEl.value : '';
+            commentsVal = commentsEl ? commentsEl.value : '';
             
             evaluations.push({
                 evaluatee_id: eid,
-                scores: { score: scoreVal ? parseInt(scoreVal, 10) : 0 },
+                scores: scores,
                 comments: commentsVal || ''
             });
         });
@@ -1420,14 +1445,27 @@ function submitEvaluationsBulk(evaluationType) {
         if (!eid) return;
         const scoreEl = document.getElementById(`score-${eid}`);
         const scoreVal = scoreEl ? scoreEl.value : '';
-        if (scoreVal === '') return; // 점수 없는 항목은 제외
-        scores = { score: parseInt(scoreVal, 10) };
+        
+        // 일반직 평가는 점수가 없어도 코멘트만 있어도 제출 가능
+        if (evaluationType === 'general' && userType === '평가자(팀장)') {
+            // 일반직 평가는 점수 없이도 제출 가능
+            scores = scoreVal ? { score: parseInt(scoreVal, 10) } : {};
+        } else {
+            // 다른 평가는 점수가 있어야 제출 가능
+            if (scoreVal === '') return; // 점수 없는 항목은 제외
+            scores = { score: parseInt(scoreVal, 10) };
+        }
     }
     
     const commentsEl = document.getElementById(`comments-${eid}`);
     commentsVal = commentsEl ? commentsEl.value : '';
+    
+    // 일반직 평가는 코멘트가 있어야 제출 가능
+    if (evaluationType === 'general' && userType === '평가자(팀장)') {
+        if (!commentsVal.trim()) return; // 코멘트가 없으면 제외
+    }
             
-            totalCount++;
+    totalCount++;
             
             fetch('/submit_evaluation', {
                 method: 'POST',
@@ -1435,14 +1473,27 @@ function submitEvaluationsBulk(evaluationType) {
                 body: JSON.stringify({
                     evaluatee_id: eid,
                     evaluation_type: evaluationType,
-                    scores: { score: parseInt(scoreVal, 10) },
+                    scores: scores,
                     comments: commentsVal || ''
                 })
             }).then(r => r.json()).then(res => {
                 submittedCount++;
                 if (res.success) {
                     if (submittedCount === totalCount) {
-                        alert(`총 ${submittedCount}건의 평가가 제출되었습니다.`);
+                        // 모든 개별 제출이 완료되면 최종제출 처리
+                        fetch('/finalize_evaluation', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ evaluation_type: evaluationType })
+                        }).then(r => r.json()).then(finalizeRes => {
+                            if (finalizeRes.success) {
+                                alert(`총 ${submittedCount}건의 평가가 최종제출되었습니다.`);
+                                // 페이지 새로고침하여 최종제출 상태 반영
+                                location.reload();
+                            } else {
+                                alert(finalizeRes.message || '최종제출 중 오류가 발생했습니다.');
+                            }
+                        });
                     }
                 } else {
                     alert(res.message || '제출 중 오류가 발생했습니다.');
@@ -1484,7 +1535,20 @@ function submitEvaluationsBulk(evaluationType) {
             body: JSON.stringify({ evaluation_type: evaluationType, evaluations })
         }).then(r => r.json()).then(res => {
             if (res.success) {
-                alert(`총 ${res.count}건의 평가가 제출되었습니다.`);
+                // 최종제출 처리
+                fetch('/finalize_evaluation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ evaluation_type: evaluationType })
+                }).then(r => r.json()).then(finalizeRes => {
+                    if (finalizeRes.success) {
+                        alert(`총 ${res.count}건의 평가가 최종제출되었습니다.`);
+                        // 페이지 새로고침하여 최종제출 상태 반영
+                        location.reload();
+                    } else {
+                        alert(finalizeRes.message || '최종제출 중 오류가 발생했습니다.');
+                    }
+                });
             } else {
                 alert(res.message || '제출 중 오류가 발생했습니다.');
             }
@@ -1492,8 +1556,132 @@ function submitEvaluationsBulk(evaluationType) {
     }
 }
 
+// 최종제출 상태 확인 및 폼 비활성화
+function checkFinalSubmitStatus() {
+    const evaluationType = '{{ evaluation_type }}';
+    
+    fetch(`/check_final_submit_status/${evaluationType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.is_finalized) {
+                // 최종제출된 경우 폼 비활성화
+                disableEvaluationForm();
+                showFinalizedMessage();
+            } else {
+                // 미제출인 경우 저장된 데이터 로드
+                loadSavedEvaluations();
+            }
+        })
+        .catch(error => {
+            console.error('최종제출 상태 확인 오류:', error);
+            // 오류 시에도 저장된 데이터 로드 시도
+            loadSavedEvaluations();
+        });
+}
+
+// 폼 비활성화
+function disableEvaluationForm() {
+    // 최종제출된 데이터도 로드
+    loadSavedEvaluations();
+    
+    // 모든 입력 요소 비활성화
+    const inputs = document.querySelectorAll('input, textarea, button');
+    inputs.forEach(input => {
+        if (!input.classList.contains('btn-performance-view')) { // 실적 조회 버튼은 제외
+            input.disabled = true;
+            input.style.opacity = '0.6';
+        }
+    });
+    
+    // 임시저장/최종제출 버튼 숨기기
+    const tempSaveBtns = document.querySelectorAll('.btn-temp-save');
+    const finalSubmitBtns = document.querySelectorAll('.btn-final-submit');
+    
+    tempSaveBtns.forEach(btn => btn.style.display = 'none');
+    finalSubmitBtns.forEach(btn => btn.style.display = 'none');
+}
+
+// 최종제출 완료 메시지 표시
+function showFinalizedMessage() {
+    const evaluationType = '{{ evaluation_type }}';
+    const evaluationTypeName = evaluationType === 'employee' ? '사원 평가' : 
+                              evaluationType === 'manager' ? '관리직 평가' : 
+                              evaluationType === 'general' ? '일반직 평가' : 
+                              evaluationType === 'team_leader' ? '팀장 평가' : '평가';
+    
+    // 페이지 상단에 알림 표시
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>최종제출 완료</strong><br>
+        ${evaluationTypeName}이 최종제출되었습니다. 수정이 불가능합니다.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // 페이지 상단에 삽입
+    const container = document.querySelector('.container-fluid') || document.querySelector('.container');
+    if (container) {
+        container.insertBefore(alertDiv, container.firstChild);
+    }
+}
+
+// 페이지 로드 시 저장된 평가 데이터 불러오기
+function loadSavedEvaluations() {
+    const evaluationType = '{{ evaluation_type }}';
+    
+    fetch(`/get_saved_evaluation/${evaluationType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                Object.keys(data.data).forEach(evaluateeId => {
+                    const savedData = data.data[evaluateeId];
+                    
+                    // 절대평가인 경우 라디오 버튼 설정
+                    if (evaluationType === 'employee') {
+                        Object.keys(savedData.scores).forEach(radioName => {
+                            const radio = document.querySelector(`input[name="${radioName}"][value="${savedData.scores[radioName]}"]`);
+                            if (radio) {
+                                radio.checked = true;
+                                // 총점 계산
+                                const employeeId = radioName.split('_').pop();
+                                calculateTotalScore(employeeId);
+                            }
+                        });
+                    } else {
+                        // 상대평가인 경우 점수 입력
+                        const scoreInput = document.getElementById(`score-${evaluateeId}`);
+                        if (scoreInput && savedData.scores.score) {
+                            scoreInput.value = savedData.scores.score;
+                            // 합계 점수 업데이트 (임원의 관리직 평가인 경우만)
+                            if ('{{ session["user_type"] }}' === '평가자(임원)' && evaluationType === 'manager') {
+                                updateTotalScore(evaluateeId);
+                            }
+                            // 팀장평가(evaluationType === 'team_leader')에서는 합계 점수 계산하지 않음
+                        }
+                    }
+                    
+                    // 평가 의견 설정
+                    const commentsInput = document.getElementById(`comments-${evaluateeId}`);
+                    if (commentsInput) {
+                        commentsInput.value = savedData.comments || '';
+                    }
+                });
+                
+                // 포인트 계산 업데이트
+                calculateRemainingPoints();
+            }
+        })
+        .catch(error => {
+            console.error('저장된 평가 데이터 로드 오류:', error);
+        });
+}
+
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
+    // 최종제출 상태 확인 (먼저 실행)
+    checkFinalSubmitStatus();
+    
     // 평가자(임원)의 팀원 평가(관리직)에서 초기 합계 점수 표시
     const userType = '{{ session["user_type"] }}';
     const evaluationType = '{{ evaluation_type }}';
@@ -1507,6 +1695,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    // 팀장평가(evaluationType === 'team_leader')에서는 합계 점수 계산하지 않음
 });
 </script>
 {% endblock %} 
