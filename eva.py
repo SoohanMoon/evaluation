@@ -436,10 +436,10 @@ def dashboard():
         commit_db(conn)
         conn.close()
         
-        return render_template('admin_dashboard.html', 
-                             user_data=user_data, 
-                             evaluator_stats=evaluator_stats,
-                             performance_stats=performance_stats)
+    return render_template('admin_dashboard.html', 
+                         user_data=user_data, 
+                         evaluator_stats=evaluator_stats,
+                         performance_stats=performance_stats)
 
 @app.route('/performance', methods=['GET', 'POST'])
 def performance():
