@@ -41,7 +41,8 @@ def load_backdata():
             return df
         except Exception as e:
             print(f"backdata 로드 오류: {e}")
-            return None
+            # Railway 배포 시 CSV 파일이 없을 경우 빈 DataFrame 반환
+            return pd.DataFrame(columns=['id', 'password', 'name', 'team', 'position', 'grade'])
 
 def load_evaluation_mappings():
     """평가자-피평가자 매핑 데이터 로드"""
@@ -980,3 +981,9 @@ if __name__ == '__main__':
     # Railway 배포 시 debug=False로 설정
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
+
+# Railway 배포를 위한 헬스체크 엔드포인트 추가
+@app.route('/health')
+def health_check():
+    """Railway 헬스체크용 엔드포인트"""
+    return {'status': 'healthy', 'message': 'Evaluation system is running'}, 200
