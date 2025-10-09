@@ -478,8 +478,7 @@ def performance():
                     ''', (user_data['id'], i, project_name, performance))
         
         commit_db(conn)
-        commit_db(conn)
-    conn.close()
+        conn.close()
         
         flash('실적이 등록되었습니다.')
         return redirect(url_for('performance'))
