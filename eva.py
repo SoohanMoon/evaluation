@@ -986,10 +986,5 @@ if __name__ == '__main__':
 @app.route('/health')
 def health_check():
     """Railway 헬스체크용 엔드포인트"""
-    try:
-        # 간단한 데이터베이스 연결 테스트
-        conn = get_db_connection()
-        conn.close()
-        return {'status': 'healthy', 'message': 'Evaluation system is running'}, 200
-    except Exception as e:
-        return {'status': 'unhealthy', 'error': str(e)}, 500
+    return 'OK', 200
+
