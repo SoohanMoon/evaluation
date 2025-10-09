@@ -984,7 +984,5 @@ def health_check():
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
-    # Railway 배포 시 debug=False로 설정
-    debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-    app.run(debug=debug_mode, host='0.0.0.0', port=port)
+    app.run(debug=False, host='0.0.0.0', port=port)
 
