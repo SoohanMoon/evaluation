@@ -434,8 +434,7 @@ def dashboard():
             })
         
         commit_db(conn)
-        commit_db(conn)
-    conn.close()
+        conn.close()
         
         return render_template('admin_dashboard.html', 
                              user_data=user_data, 
