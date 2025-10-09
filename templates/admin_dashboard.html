@@ -1,28 +1,169 @@
 {% extends "base.html" %}
 
-{% block title %}관리자 대시보드{% endblock %}
+{% block title %}관리자 대시보드 - DK 동국홀딩스 인사평가 시스템{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: white;
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+.user-profile-card {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.kpi-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    border: none;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.kpi-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.kpi-label {
+    font-size: 1rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.status-table {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.management-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.management-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.management-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.alerts-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 30px;
+}
+
+.alert-item {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.table-modern {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.table-modern thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.table-modern tbody tr:hover {
+    background-color: #f8f9ff;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="user-info">
-    <div class="row">
-        <div class="col-md-3">
-            <h6><i class="fas fa-user me-2"></i>이름</h6>
-            <p class="mb-0">{{ user_data.name }}</p>
-        </div>
-        <div class="col-md-3">
-            <h6><i class="fas fa-building me-2"></i>소속</h6>
-            <p class="mb-0">{{ user_data.team }}</p>
-        </div>
-        <div class="col-md-3">
-            <h6><i class="fas fa-id-badge me-2"></i>직위</h6>
-            <p class="mb-0">{{ user_data.position }}</p>
-        </div>
-        <div class="col-md-3">
-            <h6><i class="fas fa-star me-2"></i>직급</h6>
-            <p class="mb-0">{{ user_data.grade }}</p>
+<!-- 대시보드 헤더 -->
+<div class="dashboard-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>DK 동국홀딩스 인사평가 시스템
+                </h2>
+                <p class="mb-0 mt-2" style="color: rgba(255,255,255,0.9);">관리자 대시보드</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-2"></i>{{ user_data.name }}
+                        <i class="fas fa-chevron-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>로그아웃</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<div class="container-fluid">
+    <!-- 사용자 프로필 카드 -->
+    <div class="user-profile-card">
+        <div class="row">
+            <div class="col-md-3">
+                <h6><i class="fas fa-user me-2"></i>이름</h6>
+                <p class="mb-0 fs-5 fw-bold">{{ user_data.name }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6><i class="fas fa-building me-2"></i>소속</h6>
+                <p class="mb-0 fs-5 fw-bold">{{ user_data.team }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6><i class="fas fa-id-badge me-2"></i>직위</h6>
+                <p class="mb-0 fs-5 fw-bold">{{ user_data.position }}</p>
+            </div>
+            <div class="col-md-3">
+                <h6><i class="fas fa-star me-2"></i>직급</h6>
+                <p class="mb-0 fs-5 fw-bold">{{ user_data.grade }}</p>
+            </div>
+        </div>
+    </div>
 
 <div class="row mt-3">
     <div class="col-12">
