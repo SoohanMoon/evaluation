@@ -18,9 +18,9 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
 def get_db_connection():
-    """데이터베이스 연결 (Heroku PostgreSQL 또는 로컬 SQLite)"""
+    """데이터베이스 연결 (Railway PostgreSQL 또는 로컬 SQLite)"""
     if HEROKU_MODE and os.environ.get('DATABASE_URL'):
-        # Heroku PostgreSQL
+        # Railway PostgreSQL
         DATABASE_URL = os.environ.get('DATABASE_URL')
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
@@ -28,6 +28,15 @@ def get_db_connection():
     else:
         # 로컬 SQLite
         return sqlite3.connect('evaluation.db')
+
+def is_postgresql():
+    """PostgreSQL 사용 여부 확인"""
+    return HEROKU_MODE and os.environ.get('DATABASE_URL')
+
+def commit_db(conn):
+    """데이터베이스 커밋 (PostgreSQL은 autocommit 사용)"""
+    if not is_postgresql():
+        conn.commit()
 
 # 데이터 로드 함수들
 def load_backdata():
@@ -131,46 +140,92 @@ def load_jikkeup():
 
 # 데이터베이스 초기화
 def init_db():
-    """SQLite 데이터베이스 초기화"""
-    conn = sqlite3.connect('evaluation.db')
-    cursor = conn.cursor()
+    """데이터베이스 초기화 (PostgreSQL 또는 SQLite)"""
+    conn = get_db_connection()
     
-    # 실적 데이터 테이블 (최대 10개 실적 지원)
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS performance_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            employee_id TEXT NOT NULL,
-            performance_order INTEGER NOT NULL,  -- 실적 순서 (1-10)
-            project_name TEXT NOT NULL,
-            performance TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            is_finalized BOOLEAN DEFAULT FALSE,
-            UNIQUE(employee_id, performance_order)
-        )
-    ''')
-    
-    # 평가 데이터 테이블
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS evaluation_data (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            evaluator_id TEXT NOT NULL,
-            evaluatee_id TEXT NOT NULL,
-            evaluation_type TEXT NOT NULL,
-            scores TEXT,
-            comments TEXT,
-            is_final INTEGER DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # 기존 테이블에 is_final 컬럼 추가 (없는 경우에만)
-    try:
-        cursor.execute('ALTER TABLE evaluation_data ADD COLUMN is_final INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        # 컬럼이 이미 존재하는 경우 무시
-        pass
-    
-    conn.commit()
+    if HEROKU_MODE and os.environ.get('DATABASE_URL'):
+        # PostgreSQL
+        cursor = conn.cursor()
+        
+        # 실적 데이터 테이블 (최대 10개 실적 지원)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS performance_data (
+                id SERIAL PRIMARY KEY,
+                employee_id TEXT NOT NULL,
+                performance_order INTEGER NOT NULL,
+                project_name TEXT NOT NULL,
+                performance TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_finalized BOOLEAN DEFAULT FALSE,
+                UNIQUE(employee_id, performance_order)
+            )
+        ''')
+        
+        # 평가 데이터 테이블
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS evaluation_data (
+                id SERIAL PRIMARY KEY,
+                evaluator_id TEXT NOT NULL,
+                evaluatee_id TEXT NOT NULL,
+                evaluation_type TEXT NOT NULL,
+                scores TEXT,
+                comments TEXT,
+                is_final INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 기존 테이블에 is_final 컬럼 추가 (없는 경우에만)
+        try:
+            cursor.execute('ALTER TABLE evaluation_data ADD COLUMN is_final INTEGER DEFAULT 0')
+        except psycopg2.errors.DuplicateColumn:
+            # 컬럼이 이미 존재하는 경우 무시
+            pass
+        
+        commit_db(conn)
+        commit_db(conn)
+    conn.close()
+    else:
+        # SQLite
+        cursor = conn.cursor()
+        
+        # 실적 데이터 테이블 (최대 10개 실적 지원)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS performance_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                performance_order INTEGER NOT NULL,  -- 실적 순서 (1-10)
+                project_name TEXT NOT NULL,
+                performance TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                is_finalized BOOLEAN DEFAULT FALSE,
+                UNIQUE(employee_id, performance_order)
+            )
+        ''')
+        
+        # 평가 데이터 테이블
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS evaluation_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                evaluator_id TEXT NOT NULL,
+                evaluatee_id TEXT NOT NULL,
+                evaluation_type TEXT NOT NULL,
+                scores TEXT,
+                comments TEXT,
+                is_final INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 기존 테이블에 is_final 컬럼 추가 (없는 경우에만)
+        try:
+            cursor.execute('ALTER TABLE evaluation_data ADD COLUMN is_final INTEGER DEFAULT 0')
+        except sqlite3.OperationalError:
+            # 컬럼이 이미 존재하는 경우 무시
+            pass
+        
+        commit_db(conn)
+        commit_db(conn)
     conn.close()
 
 # 로그인 처리
@@ -292,7 +347,7 @@ def dashboard():
         return render_template('executive_dashboard.html', user_data=user_data)
     elif user_type == "관리자(인사담당자)":
         # 관리자는 모든 평가 데이터 조회
-        conn = sqlite3.connect('evaluation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         # 모든 평가 데이터 조회
@@ -379,7 +434,9 @@ def dashboard():
                 'is_finalized': is_finalized
             })
         
-        conn.close()
+        commit_db(conn)
+        commit_db(conn)
+    conn.close()
         
         return render_template('admin_dashboard.html', 
                              user_data=user_data, 
@@ -396,7 +453,7 @@ def performance():
     
     if request.method == 'POST':
         # 기존 실적 데이터 가져오기
-        conn = sqlite3.connect('evaluation.db')
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('SELECT performance_order FROM performance_data WHERE employee_id = ? AND is_finalized = FALSE', 
                       (user_data['id'],))
@@ -422,14 +479,15 @@ def performance():
                         VALUES (?, ?, ?, ?)
                     ''', (user_data['id'], i, project_name, performance))
         
-        conn.commit()
-        conn.close()
+        commit_db(conn)
+        commit_db(conn)
+    conn.close()
         
         flash('실적이 등록되었습니다.')
         return redirect(url_for('performance'))
     
     # 기존 실적 조회
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         SELECT performance_order, project_name, performance, created_at, is_finalized 
@@ -438,6 +496,7 @@ def performance():
         ORDER BY performance_order
     ''', (user_data['id'],))
     performance_data = cursor.fetchall()
+    commit_db(conn)
     conn.close()
     
     # 실적 데이터를 딕셔너리로 변환
@@ -465,7 +524,7 @@ def finalize_performance():
     
     user_data = session['user_data']
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 최소 1개 이상의 실적이 있는지 확인
@@ -474,7 +533,9 @@ def finalize_performance():
     count = cursor.fetchone()[0]
     
     if count == 0:
-        conn.close()
+        commit_db(conn)
+        commit_db(conn)
+    conn.close()
         return jsonify({'success': False, 'message': '최소 1개 이상의 실적을 작성해주세요.'})
     
     cursor.execute('''
@@ -483,7 +544,7 @@ def finalize_performance():
         WHERE employee_id = ? AND is_finalized = FALSE
     ''', (user_data['id'],))
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     return jsonify({'success': True, 'message': '실적이 최종 등록되었습니다.'})
@@ -536,7 +597,7 @@ def evaluate(evaluation_type):
                     team_leader_ids = [11050121, 11980036, 11040086, 11080043, 11040050, 11010060]
                     
                     # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
-                    conn = sqlite3.connect('evaluation.db')
+                    conn = get_db_connection()
                     cursor = conn.cursor()
                     cursor.execute('''
                         SELECT scores FROM evaluation_data 
@@ -545,7 +606,9 @@ def evaluate(evaluation_type):
                         ORDER BY created_at DESC LIMIT 1
                     '''.format(','.join(map(str, team_leader_ids))), (evaluatee_id,))
                     result = cursor.fetchone()
-                    conn.close()
+                    commit_db(conn)
+        commit_db(conn)
+    conn.close()
                     
                     if result:
                         try:
@@ -624,7 +687,7 @@ def submit_evaluation():
     scores = data.get('scores', {})
     comments = data.get('comments', '')
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 기존 평가가 있는지 확인
@@ -649,7 +712,7 @@ def submit_evaluation():
             VALUES (?, ?, ?, ?, ?, 0)
         ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     return jsonify({'success': True, 'message': '평가가 제출되었습니다.'})
@@ -668,7 +731,7 @@ def submit_evaluations_bulk():
     if evaluation_type is None or not evaluations:
         return jsonify({'success': False, 'message': '평가 데이터가 비어 있습니다.'})
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     for item in evaluations:
@@ -696,7 +759,7 @@ def submit_evaluations_bulk():
                 VALUES (?, ?, ?, ?, ?, 0)
             ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     return jsonify({'success': True, 'count': len(evaluations)})
 
@@ -712,7 +775,7 @@ def finalize_evaluation():
     
     print(f"Finalizing evaluation: evaluator_id={evaluator_id}, evaluation_type={evaluation_type}")
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 해당 평가자의 해당 평가 유형의 모든 임시저장 데이터를 최종제출로 변경
@@ -725,7 +788,7 @@ def finalize_evaluation():
     updated_count = cursor.rowcount
     print(f"Updated {updated_count} records to final")
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     return jsonify({'success': True, 'message': '최종제출이 완료되었습니다.', 'updated_count': updated_count})
@@ -738,7 +801,7 @@ def check_final_submit_status(evaluation_type):
     
     evaluator_id = session['user_data']['id']
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 최종제출 상태 확인 (is_final=1인 데이터가 있으면 최종제출된 것으로 간주)
@@ -748,6 +811,7 @@ def check_final_submit_status(evaluation_type):
     ''', (evaluator_id, evaluation_type))
     
     count = cursor.fetchone()[0]
+    commit_db(conn)
     conn.close()
     
     is_finalized = count > 0
@@ -766,7 +830,7 @@ def get_saved_evaluation(evaluation_type):
     
     evaluator_id = session['user_data']['id']
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         SELECT evaluatee_id, scores, comments, created_at 
@@ -775,6 +839,7 @@ def get_saved_evaluation(evaluation_type):
         ORDER BY created_at DESC
     ''', (evaluator_id, evaluation_type))
     saved_evaluations = cursor.fetchall()
+    commit_db(conn)
     conn.close()
     
     evaluations = {}
@@ -803,7 +868,7 @@ def get_performance(employee_id):
     
     print(f"실적 조회 요청: employee_id={employee_id}")
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
         SELECT performance_order, project_name, performance, created_at 
@@ -812,6 +877,7 @@ def get_performance(employee_id):
         ORDER BY performance_order
     ''', (employee_id,))
     performance_data = cursor.fetchall()
+    commit_db(conn)
     conn.close()
     
     print(f"조회된 실적 데이터: {performance_data}")
@@ -839,7 +905,7 @@ def download_excel():
     if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 모든 평가 데이터 조회
@@ -850,6 +916,7 @@ def download_excel():
     ''')
     
     evaluations = cursor.fetchall()
+    commit_db(conn)
     conn.close()
     
     # 데이터를 DataFrame으로 변환
@@ -925,13 +992,13 @@ def reset_evaluations():
     if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 모든 평가 데이터 삭제
     cursor.execute('DELETE FROM evaluation_data')
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     flash('모든 평가 데이터가 초기화되었습니다.', 'success')
@@ -943,14 +1010,14 @@ def reset_evaluator(evaluator_id):
     if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 특정 평가자의 평가 데이터 삭제
     cursor.execute('DELETE FROM evaluation_data WHERE evaluator_id = ?', (evaluator_id,))
     deleted_count = cursor.rowcount
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     flash(f'평가자 {evaluator_id}의 평가 데이터 {deleted_count}건이 초기화되었습니다.', 'success')
@@ -962,14 +1029,14 @@ def reset_performance(employee_id):
     if 'user_type' not in session or session['user_type'] != "관리자(인사담당자)":
         return redirect(url_for('login'))
     
-    conn = sqlite3.connect('evaluation.db')
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     # 특정 피평가자의 실적 데이터 삭제
     cursor.execute('DELETE FROM performance_data WHERE employee_id = ?', (employee_id,))
     deleted_count = cursor.rowcount
     
-    conn.commit()
+    commit_db(conn)
     conn.close()
     
     flash(f'피평가자 {employee_id}의 실적 데이터 {deleted_count}건이 초기화되었습니다.', 'success')
