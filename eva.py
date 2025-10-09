@@ -531,8 +531,7 @@ def finalize_performance():
     
     if count == 0:
         commit_db(conn)
-        commit_db(conn)
-    conn.close()
+        conn.close()
         return jsonify({'success': False, 'message': '최소 1개 이상의 실적을 작성해주세요.'})
     
     cursor.execute('''
@@ -604,8 +603,7 @@ def evaluate(evaluation_type):
                     '''.format(','.join(map(str, team_leader_ids))), (evaluatee_id,))
                     result = cursor.fetchone()
                     commit_db(conn)
-        commit_db(conn)
-    conn.close()
+                    conn.close()
                     
                     if result:
                         try:
