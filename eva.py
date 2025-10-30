@@ -17,6 +17,27 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
+def get_excluded_evaluatee_ids():
+    """환경변수 EXCLUDED_EVALUATEE_IDS(콤마 구분)에서 제외할 피평가자 ID 집합을 반환"""
+    raw = os.environ.get('EXCLUDED_EVALUATEE_IDS', '')
+    excluded_ids = set()
+    if raw:
+        for part in raw.split(','):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                excluded_ids.add(int(part))
+            except Exception:
+                # 잘못된 값은 무시
+                pass
+    return excluded_ids
+
+def get_all_excluded_evaluatee_ids():
+    """코드에 박힌 기본 제외 + 환경변수 설정 제외를 합쳐 반환"""
+    default_excluded = {11160147, 11960038, 12140051}
+    return default_excluded | get_excluded_evaluatee_ids()
+
 def get_db_connection():
     """데이터베이스 연결 (Railway PostgreSQL 또는 로컬 SQLite)"""
     if HEROKU_MODE and os.environ.get('DATABASE_URL'):
@@ -238,8 +259,8 @@ def authenticate_user(user_type, user_id, password):
     if user_type == "피평가자":
         user_data = backdata[backdata.iloc[:, 0] == int(user_id)]
         if not user_data.empty and str(user_data.iloc[0, 1]) == password:
-            # 11160147, 11960038은 피평가자 로그인 제외
-            if int(user_id) in [11160147, 11960038]:
+            # 피평가자 로그인 제외: 기본 + 환경변수 설정
+            if int(user_id) in get_all_excluded_evaluatee_ids():
                 return False, None
             return True, {
                 'id': user_id,
@@ -582,6 +603,9 @@ def evaluate(evaluation_type):
     for _, row in mapping_data.iterrows():
         if str(row['evaluaterid']) == str(user_data['id']):
             evaluatee_id = int(row['evaluateeid'])  # Int64를 int로 변환
+            # 제외 대상이면 스킵
+            if evaluatee_id in get_all_excluded_evaluatee_ids():
+                continue
             evaluatee_data = backdata[backdata.iloc[:, 0] == evaluatee_id]
             if not evaluatee_data.empty:
                 # 직전 평가 점수 가져오기
