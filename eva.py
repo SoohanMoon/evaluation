@@ -1104,6 +1104,31 @@ def health_check():
     """Railway 헬스체크용 엔드포인트"""
     return 'OK', 200
 
+# 간단한 진단용 엔드포인트: 배포 환경에서 backdata 내용 확인
+@app.route('/debug/backdata_find')
+def debug_backdata_find():
+    """Query param q 로 전달된 문자열이 backdata 이름 열에 존재하는지 확인"""
+    query = request.args.get('q', '').strip()
+    try:
+        df = load_backdata()
+        if df.empty or not query:
+            return jsonify({
+                'success': True,
+                'query': query,
+                'total_rows': int(getattr(df, 'shape', (0, 0))[0]),
+                'matches': 0
+            })
+        name_series = df.iloc[:, 2].astype(str)
+        matches = int(name_series.str.contains(query, na=False).sum())
+        return jsonify({
+            'success': True,
+            'query': query,
+            'total_rows': int(df.shape[0]),
+            'matches': matches
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'query': query})
+
 if __name__ == '__main__':
     # 서버를 먼저 시작하여 헬스체크가 즉시 응답하도록 하고,
     # DB 스키마 준비는 before_first_request 훅에서 수행한다.
