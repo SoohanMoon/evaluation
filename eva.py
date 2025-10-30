@@ -45,7 +45,13 @@ def get_db_connection():
         DATABASE_URL = os.environ.get('DATABASE_URL')
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-        return psycopg2.connect(DATABASE_URL)
+        conn = psycopg2.connect(DATABASE_URL)
+        # Postgres에서는 DDL이 반영되도록 autocommit 활성화
+        try:
+            conn.autocommit = True
+        except Exception:
+            pass
+        return conn
     else:
         # 로컬 SQLite
         return sqlite3.connect('evaluation.db')
@@ -54,10 +60,36 @@ def is_postgresql():
     """PostgreSQL 사용 여부 확인"""
     return HEROKU_MODE and os.environ.get('DATABASE_URL')
 
+def adapt_query(query: str) -> str:
+    """DB 드라이버별 플레이스홀더 변환.
+    SQLite: '?', PostgreSQL(psycopg2): '%s'
+    """
+    if is_postgresql():
+        return query.replace('?', '%s')
+    return query
+
 def commit_db(conn):
-    """데이터베이스 커밋 (PostgreSQL은 autocommit 사용)"""
-    if not is_postgresql():
+    """데이터베이스 커밋"""
+    try:
         conn.commit()
+    except Exception:
+        # autocommit일 때는 commit이 필요 없음
+        pass
+
+# 안전 초기화 도우미
+def safe_init_db():
+    try:
+        init_db()
+    except Exception as e:
+        print(f"safe_init_db error: {e}")
+# 운영 환경(Gunicorn 등)에서도 최초 요청 전에 반드시 DB 스키마를 준비
+@app.before_first_request
+def _ensure_db_initialized():
+    try:
+        init_db()
+    except Exception as e:
+        # 초기화 실패 시에도 앱이 죽지 않도록 로그만 남김
+        print(f"DB init error: {e}")
 
 # 데이터 로드 함수들
 def load_backdata():
@@ -248,6 +280,13 @@ def init_db():
         commit_db(conn)
     conn.close()
 
+# 모듈 로드 시에도 한 번 보장적으로 스키마를 준비한다
+try:
+    init_db()
+    print("DB initialized at import time")
+except Exception as e:
+    print(f"DB init on import failed: {e}")
+
 # 로그인 처리
 def authenticate_user(user_type, user_id, password):
     """사용자 인증"""
@@ -355,6 +394,8 @@ def dashboard():
     """대시보드"""
     if 'user_type' not in session:
         return redirect(url_for('login'))
+    # 일부 환경에서 초기화 타이밍 이슈를 방지
+    safe_init_db()
     
     user_type = session['user_type']
     user_data = session['user_data']
@@ -474,7 +515,7 @@ def performance():
         # 기존 실적 데이터 가져오기
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute('SELECT performance_order FROM performance_data WHERE employee_id = ? AND is_finalized = FALSE', 
+        cursor.execute(adapt_query('SELECT performance_order FROM performance_data WHERE employee_id = ? AND is_finalized = FALSE'), 
                       (user_data['id'],))
         existing_orders = [row[0] for row in cursor.fetchall()]
         
@@ -486,17 +527,17 @@ def performance():
             if project_name and performance:  # 둘 다 입력된 경우만 저장
                 if i in existing_orders:
                     # 기존 실적 업데이트
-                    cursor.execute('''
+                    cursor.execute(adapt_query('''
                         UPDATE performance_data 
                         SET project_name = ?, performance = ?, created_at = CURRENT_TIMESTAMP
                         WHERE employee_id = ? AND performance_order = ? AND is_finalized = FALSE
-                    ''', (project_name, performance, user_data['id'], i))
+                    '''), (project_name, performance, user_data['id'], i))
                 else:
                     # 새 실적 등록
-                    cursor.execute('''
+                    cursor.execute(adapt_query('''
                         INSERT INTO performance_data (employee_id, performance_order, project_name, performance)
                         VALUES (?, ?, ?, ?)
-                    ''', (user_data['id'], i, project_name, performance))
+                    '''), (user_data['id'], i, project_name, performance))
         
         commit_db(conn)
         conn.close()
@@ -507,12 +548,12 @@ def performance():
     # 기존 실적 조회
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         SELECT performance_order, project_name, performance, created_at, is_finalized 
         FROM performance_data 
         WHERE employee_id = ? 
         ORDER BY performance_order
-    ''', (user_data['id'],))
+    '''), (user_data['id'],))
     performance_data = cursor.fetchall()
     commit_db(conn)
     conn.close()
@@ -546,7 +587,7 @@ def finalize_performance():
     cursor = conn.cursor()
     
     # 최소 1개 이상의 실적이 있는지 확인
-    cursor.execute('SELECT COUNT(*) FROM performance_data WHERE employee_id = ? AND is_finalized = FALSE', 
+    cursor.execute(adapt_query('SELECT COUNT(*) FROM performance_data WHERE employee_id = ? AND is_finalized = FALSE'), 
                   (user_data['id'],))
     count = cursor.fetchone()[0]
     
@@ -555,11 +596,11 @@ def finalize_performance():
         conn.close()
         return jsonify({'success': False, 'message': '최소 1개 이상의 실적을 작성해주세요.'})
     
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         UPDATE performance_data 
         SET is_finalized = TRUE
         WHERE employee_id = ? AND is_finalized = FALSE
-    ''', (user_data['id'],))
+    '''), (user_data['id'],))
     
     commit_db(conn)
     conn.close()
@@ -619,12 +660,12 @@ def evaluate(evaluation_type):
                     # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
                     conn = get_db_connection()
                     cursor = conn.cursor()
-                    cursor.execute('''
+                    cursor.execute(adapt_query('''
                         SELECT scores FROM evaluation_data 
                         WHERE evaluatee_id = ? AND evaluation_type = 'manager' 
                         AND evaluator_id IN ({})
                         ORDER BY created_at DESC LIMIT 1
-                    '''.format(','.join(map(str, team_leader_ids))), (evaluatee_id,))
+                    '''.format(','.join(map(str, team_leader_ids)))), (evaluatee_id,))
                     result = cursor.fetchone()
                     commit_db(conn)
                     conn.close()
@@ -710,26 +751,26 @@ def submit_evaluation():
     cursor = conn.cursor()
     
     # 기존 평가가 있는지 확인
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         SELECT * FROM evaluation_data 
         WHERE evaluator_id = ? AND evaluatee_id = ? AND evaluation_type = ?
-    ''', (evaluator_id, evaluatee_id, evaluation_type))
+    '''), (evaluator_id, evaluatee_id, evaluation_type))
     
     existing = cursor.fetchone()
     
     if existing:
         # 기존 평가 업데이트 (임시저장이므로 is_final=0)
-        cursor.execute('''
+        cursor.execute(adapt_query('''
             UPDATE evaluation_data 
             SET scores = ?, comments = ?, is_final = 0, created_at = CURRENT_TIMESTAMP
             WHERE evaluator_id = ? AND evaluatee_id = ? AND evaluation_type = ?
-        ''', (json.dumps(scores, ensure_ascii=False), comments, evaluator_id, evaluatee_id, evaluation_type))
+        '''), (json.dumps(scores, ensure_ascii=False), comments, evaluator_id, evaluatee_id, evaluation_type))
     else:
         # 새 평가 등록 (임시저장이므로 is_final=0)
-        cursor.execute('''
+        cursor.execute(adapt_query('''
             INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments, is_final)
             VALUES (?, ?, ?, ?, ?, 0)
-        ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
+        '''), (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
     commit_db(conn)
     conn.close()
@@ -761,22 +802,22 @@ def submit_evaluations_bulk():
             continue
         
         # upsert
-        cursor.execute('''
+        cursor.execute(adapt_query('''
             SELECT id FROM evaluation_data
             WHERE evaluator_id = ? AND evaluatee_id = ? AND evaluation_type = ?
-        ''', (evaluator_id, evaluatee_id, evaluation_type))
+        '''), (evaluator_id, evaluatee_id, evaluation_type))
         row = cursor.fetchone()
         if row:
-            cursor.execute('''
+            cursor.execute(adapt_query('''
                 UPDATE evaluation_data
                 SET scores = ?, comments = ?, is_final = 0, created_at = CURRENT_TIMESTAMP
                 WHERE id = ?
-            ''', (json.dumps(scores, ensure_ascii=False), comments, row[0]))
+            '''), (json.dumps(scores, ensure_ascii=False), comments, row[0]))
         else:
-            cursor.execute('''
+            cursor.execute(adapt_query('''
                 INSERT INTO evaluation_data (evaluator_id, evaluatee_id, evaluation_type, scores, comments, is_final)
                 VALUES (?, ?, ?, ?, ?, 0)
-            ''', (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
+            '''), (evaluator_id, evaluatee_id, evaluation_type, json.dumps(scores, ensure_ascii=False), comments))
     
     commit_db(conn)
     conn.close()
@@ -798,11 +839,11 @@ def finalize_evaluation():
     cursor = conn.cursor()
     
     # 해당 평가자의 해당 평가 유형의 모든 임시저장 데이터를 최종제출로 변경
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         UPDATE evaluation_data 
         SET is_final = 1, created_at = CURRENT_TIMESTAMP
         WHERE evaluator_id = ? AND evaluation_type = ? AND is_final = 0
-    ''', (evaluator_id, evaluation_type))
+    '''), (evaluator_id, evaluation_type))
     
     updated_count = cursor.rowcount
     print(f"Updated {updated_count} records to final")
@@ -824,10 +865,10 @@ def check_final_submit_status(evaluation_type):
     cursor = conn.cursor()
     
     # 최종제출 상태 확인 (is_final=1인 데이터가 있으면 최종제출된 것으로 간주)
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         SELECT COUNT(*) FROM evaluation_data 
         WHERE evaluator_id = ? AND evaluation_type = ? AND is_final = 1
-    ''', (evaluator_id, evaluation_type))
+    '''), (evaluator_id, evaluation_type))
     
     count = cursor.fetchone()[0]
     commit_db(conn)
@@ -851,12 +892,12 @@ def get_saved_evaluation(evaluation_type):
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         SELECT evaluatee_id, scores, comments, created_at 
         FROM evaluation_data 
         WHERE evaluator_id = ? AND evaluation_type = ?
         ORDER BY created_at DESC
-    ''', (evaluator_id, evaluation_type))
+    '''), (evaluator_id, evaluation_type))
     saved_evaluations = cursor.fetchall()
     commit_db(conn)
     conn.close()
@@ -889,12 +930,12 @@ def get_performance(employee_id):
     
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+    cursor.execute(adapt_query('''
         SELECT performance_order, project_name, performance, created_at 
         FROM performance_data 
         WHERE employee_id = ? AND is_finalized = TRUE
         ORDER BY performance_order
-    ''', (employee_id,))
+    '''), (employee_id,))
     performance_data = cursor.fetchall()
     commit_db(conn)
     conn.close()
@@ -1033,7 +1074,7 @@ def reset_evaluator(evaluator_id):
     cursor = conn.cursor()
     
     # 특정 평가자의 평가 데이터 삭제
-    cursor.execute('DELETE FROM evaluation_data WHERE evaluator_id = ?', (evaluator_id,))
+    cursor.execute(adapt_query('DELETE FROM evaluation_data WHERE evaluator_id = ?'), (evaluator_id,))
     deleted_count = cursor.rowcount
     
     commit_db(conn)
@@ -1052,7 +1093,7 @@ def reset_performance(employee_id):
     cursor = conn.cursor()
     
     # 특정 피평가자의 실적 데이터 삭제
-    cursor.execute('DELETE FROM performance_data WHERE employee_id = ?', (employee_id,))
+    cursor.execute(adapt_query('DELETE FROM performance_data WHERE employee_id = ?'), (employee_id,))
     deleted_count = cursor.rowcount
     
     commit_db(conn)
