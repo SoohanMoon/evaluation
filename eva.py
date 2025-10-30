@@ -38,6 +38,18 @@ def get_all_excluded_evaluatee_ids():
     default_excluded = {11160147, 11960038, 12140051}
     return default_excluded | get_excluded_evaluatee_ids()
 
+def get_excluded_evaluatee_names():
+    """환경변수 EXCLUDED_EVALUATEE_NAMES(콤마 구분)에서 제외할 피평가자 이름 집합을 반환"""
+    raw = os.environ.get('EXCLUDED_EVALUATEE_NAMES', '')
+    excluded_names = set()
+    if not raw:
+        return excluded_names
+    for part in raw.split(','):
+        name = part.strip()
+        if name:
+            excluded_names.add(name)
+    return excluded_names
+
 def get_db_connection():
     """데이터베이스 연결 (Railway PostgreSQL 또는 로컬 SQLite)"""
     if HEROKU_MODE and os.environ.get('DATABASE_URL'):
@@ -647,6 +659,11 @@ def evaluate(evaluation_type):
             if not evaluatee_data.empty:
                 # 직전 평가 점수 가져오기
                 before_point = 0
+                # 이름 기반 제외도 지원
+                excluded_names = get_excluded_evaluatee_names()
+                evaluatee_name_str = str(evaluatee_data.iloc[0, 2])
+                if evaluatee_name_str in excluded_names:
+                    continue
                 
                 # 평가자(임원)의 팀원 평가(관리직)인 경우, 팀장 평가 점수를 가져오기
                 if session['user_type'] == "평가자(임원)" and evaluation_type == "manager":
@@ -681,7 +698,7 @@ def evaluate(evaluation_type):
                 
                 evaluatees.append({
                     'id': str(evaluatee_id),  # 문자열로 변환
-                    'name': str(evaluatee_data.iloc[0, 2]),  # 문자열로 변환
+                    'name': evaluatee_name_str,  # 문자열로 변환
                     'team': str(evaluatee_data.iloc[0, 3]),  # 문자열로 변환
                     'position': str(evaluatee_data.iloc[0, 4]),  # 문자열로 변환
                     'grade': str(evaluatee_data.iloc[0, 5]),  # 문자열로 변환
