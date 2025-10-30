@@ -280,12 +280,8 @@ def init_db():
         commit_db(conn)
     conn.close()
 
-# 모듈 로드 시에도 한 번 보장적으로 스키마를 준비한다
-try:
-    init_db()
-    print("DB initialized at import time")
-except Exception as e:
-    print(f"DB init on import failed: {e}")
+# 모듈 로드 시 DB 초기화는 지연시킨다. 실제 요청 시 또는 앱 시작 후에 준비됨
+print("Deferred DB init: will initialize on first request/startup")
 
 # 로그인 처리
 def authenticate_user(user_type, user_id, password):
@@ -1109,7 +1105,8 @@ def health_check():
     return 'OK', 200
 
 if __name__ == '__main__':
-    init_db()
+    # 서버를 먼저 시작하여 헬스체크가 즉시 응답하도록 하고,
+    # DB 스키마 준비는 before_first_request 훅에서 수행한다.
     port = int(os.environ.get('PORT', 5000))
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
