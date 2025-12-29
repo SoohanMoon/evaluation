@@ -94,14 +94,36 @@ def safe_init_db():
         init_db()
     except Exception as e:
         print(f"safe_init_db error: {e}")
-# 운영 환경(Gunicorn 등)에서도 최초 요청 전에 반드시 DB 스키마를 준비
-@app.before_first_request
+
+# Flask 2.3+에서는 before_first_request가 deprecated되었으므로
+# 앱 시작 시 직접 초기화하거나 첫 요청 시 초기화
+_db_initialized = False
+
+@app.before_request
 def _ensure_db_initialized():
-    try:
-        init_db()
-    except Exception as e:
-        # 초기화 실패 시에도 앱이 죽지 않도록 로그만 남김
-        print(f"DB init error: {e}")
+    global _db_initialized
+    # 헬스체크는 DB 초기화 없이 통과
+    if request.endpoint == 'health_check':
+        return
+    
+    # 최초 한 번만 실행되도록 플래그 사용
+    if not _db_initialized:
+        try:
+            init_db()
+            _db_initialized = True
+            print("Database initialized successfully")
+        except Exception as e:
+            # 초기화 실패 시에도 앱이 죽지 않도록 로그만 남김
+            print(f"DB init error: {e}")
+            _db_initialized = True  # 실패해도 재시도 방지
+
+# 앱 로드 시 DB 초기화 시도 (Gunicorn preload 시에도 작동)
+# 하지만 실패해도 앱은 시작되도록 함
+try:
+    safe_init_db()
+    print("Database pre-initialized on app load")
+except Exception as e:
+    print(f"Pre-init DB error (will retry on first request): {e}")
 
 # 데이터 로드 함수들
 def load_backdata():
@@ -247,6 +269,31 @@ def init_db():
             # 컬럼이 이미 존재하는 경우 무시
             pass
         
+        # 조직도 관련 테이블
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS departments (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                leader_position TEXT,
+                parent_id INTEGER,
+                display_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS department_employees (
+                id SERIAL PRIMARY KEY,
+                department_id INTEGER NOT NULL,
+                employee_id TEXT NOT NULL,
+                position TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
+                UNIQUE(department_id, employee_id)
+            )
+        ''')
+        
         commit_db(conn)
         conn.close()
     else:
@@ -287,6 +334,32 @@ def init_db():
         except sqlite3.OperationalError:
             # 컬럼이 이미 존재하는 경우 무시
             pass
+        
+        # 조직도 관련 테이블
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS departments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                leader_position TEXT,
+                parent_id INTEGER,
+                display_order INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (parent_id) REFERENCES departments(id) ON DELETE SET NULL
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS department_employees (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                department_id INTEGER NOT NULL,
+                employee_id TEXT NOT NULL,
+                position TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE,
+                UNIQUE(department_id, employee_id)
+            )
+        ''')
         
         commit_db(conn)
         commit_db(conn)
@@ -1145,6 +1218,339 @@ def debug_backdata_find():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e), 'query': query})
+
+@app.route('/debug/backdata_row/<employee_id>')
+def debug_backdata_row(employee_id):
+    """지정한 사번의 backdata 행을 반환"""
+    try:
+        df = load_backdata()
+        if df.empty:
+            return jsonify({'success': True, 'found': False, 'reason': 'empty'}), 200
+        # 첫 번째 컬럼이 사번
+        subset = df[df.iloc[:, 0].astype(str) == str(employee_id)]
+        if subset.empty:
+            return jsonify({'success': True, 'found': False}), 200
+        row = subset.iloc[0]
+        return jsonify({
+            'success': True,
+            'found': True,
+            'employee_id': str(row.iloc[0]),
+            'password': str(row.iloc[1]),
+            'name': str(row.iloc[2]),
+            'team': str(row.iloc[3]),
+            'position': str(row.iloc[4]),
+            'grade': str(row.iloc[5]),
+            'raw': [str(x) for x in row.tolist()]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'employee_id': employee_id})
+
+# 조직도 관리 라우트
+@app.route('/organization')
+def organization():
+    """조직도 관리 페이지"""
+    if 'user_type' not in session:
+        return redirect(url_for('login'))
+    
+    safe_init_db()
+    return render_template('organization.html')
+
+@app.route('/api/organization/departments', methods=['GET'])
+def get_departments():
+    """조직 목록 조회"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(adapt_query('''
+            SELECT id, name, leader_position, parent_id, display_order
+            FROM departments
+            ORDER BY display_order, name
+        '''))
+        
+        departments = []
+        for row in cursor.fetchall():
+            departments.append({
+                'id': row[0],
+                'name': row[1],
+                'leader_position': row[2],
+                'parent_id': row[3],
+                'display_order': row[4]
+            })
+        
+        conn.close()
+        return jsonify({'success': True, 'departments': departments})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/departments', methods=['POST'])
+def create_department():
+    """조직 생성"""
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(adapt_query('''
+            INSERT INTO departments (name, leader_position, parent_id, display_order)
+            VALUES (?, ?, ?, ?)
+        '''), (
+            data.get('name'),
+            data.get('leader_position'),
+            data.get('parent_id'),
+            data.get('display_order', 0)
+        ))
+        
+        commit_db(conn)
+        if is_postgresql():
+            cursor.execute('SELECT LASTVAL()')
+            department_id = cursor.fetchone()[0]
+        else:
+            department_id = cursor.lastrowid
+        conn.close()
+        
+        return jsonify({'success': True, 'id': department_id})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/departments/<int:dept_id>', methods=['PUT'])
+def update_department(dept_id):
+    """조직 수정"""
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(adapt_query('''
+            UPDATE departments
+            SET name = ?, leader_position = ?, parent_id = ?, display_order = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        '''), (
+            data.get('name'),
+            data.get('leader_position'),
+            data.get('parent_id'),
+            data.get('display_order', 0),
+            dept_id
+        ))
+        
+        commit_db(conn)
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/departments/<int:dept_id>', methods=['DELETE'])
+def delete_department(dept_id):
+    """조직 삭제"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(adapt_query('DELETE FROM departments WHERE id = ?'), (dept_id,))
+        
+        commit_db(conn)
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/employees', methods=['GET'])
+def get_department_employees():
+    """조직별 직원 목록 조회"""
+    try:
+        dept_id = request.args.get('department_id')
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        backdata = load_backdata()
+        
+        if dept_id:
+            cursor.execute(adapt_query('''
+                SELECT id, employee_id, position
+                FROM department_employees
+                WHERE department_id = ?
+            '''), (dept_id,))
+        else:
+            cursor.execute(adapt_query('''
+                SELECT id, department_id, employee_id, position
+                FROM department_employees
+            '''))
+        
+        employees = []
+        for row in cursor.fetchall():
+            employee_id = str(row[1]) if dept_id else str(row[2])
+            # backdata에서 직원 정보 찾기
+            emp_data = backdata[backdata.iloc[:, 0].astype(str) == employee_id]
+            if not emp_data.empty:
+                emp_info = {
+                    'id': row[0],
+                    'employee_id': employee_id,
+                    'name': str(emp_data.iloc[0, 2]),
+                    'team': str(emp_data.iloc[0, 3]),
+                    'position': str(emp_data.iloc[0, 4]),
+                    'grade': str(emp_data.iloc[0, 5]),
+                    'department_position': row[2] if dept_id else row[3]
+                }
+            else:
+                emp_info = {
+                    'id': row[0],
+                    'employee_id': employee_id,
+                    'name': f'사번 {employee_id}',
+                    'team': 'Unknown',
+                    'position': 'Unknown',
+                    'grade': 'Unknown',
+                    'department_position': row[2] if dept_id else row[3]
+                }
+            employees.append(emp_info)
+        
+        conn.close()
+        return jsonify({'success': True, 'employees': employees})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/employees', methods=['POST'])
+def assign_employee():
+    """직원을 조직에 배정"""
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 기존 배정이 있으면 삭제
+        cursor.execute(adapt_query('''
+            DELETE FROM department_employees WHERE employee_id = ?
+        '''), (data.get('employee_id'),))
+        
+        # 새로 배정
+        cursor.execute(adapt_query('''
+            INSERT INTO department_employees (department_id, employee_id, position)
+            VALUES (?, ?, ?)
+        '''), (
+            data.get('department_id'),
+            data.get('employee_id'),
+            data.get('position')
+        ))
+        
+        commit_db(conn)
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/employees/<int:emp_id>', methods=['DELETE'])
+def remove_employee(emp_id):
+    """직원을 조직에서 제거"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(adapt_query('DELETE FROM department_employees WHERE id = ?'), (emp_id,))
+        
+        commit_db(conn)
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/upload', methods=['POST'])
+def upload_organization():
+    """조직도 CSV 업로드"""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'success': False, 'error': '파일이 없습니다.'}), 400
+        
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'success': False, 'error': '파일이 선택되지 않았습니다.'}), 400
+        
+        # CSV 파일 읽기
+        try:
+            df = pd.read_csv(file, encoding='utf-8')
+        except:
+            file.seek(0)
+            df = pd.read_csv(file, encoding='cp949')
+        
+        # 필수 컬럼 확인 (조직명, 조직장 직급)
+        required_cols = ['조직명', '조직장 직급']
+        if not all(col in df.columns for col in required_cols):
+            return jsonify({'success': False, 'error': f'필수 컬럼이 없습니다: {required_cols}'}), 400
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # 기존 조직 삭제 (선택사항)
+        if request.form.get('clear_existing') == 'true':
+            cursor.execute('DELETE FROM department_employees')
+            cursor.execute('DELETE FROM departments')
+        
+        # 조직 데이터 삽입
+        dept_map = {}  # 조직명 -> ID 매핑
+        
+        for idx, row in df.iterrows():
+            dept_name = str(row['조직명']).strip()
+            leader_position = str(row['조직장 직급']).strip() if pd.notna(row.get('조직장 직급')) else None
+            parent_name = str(row.get('상위 조직', '')).strip() if pd.notna(row.get('상위 조직')) else None
+            
+            # 조직이 이미 있으면 스킵
+            cursor.execute(adapt_query('SELECT id FROM departments WHERE name = ?'), (dept_name,))
+            existing = cursor.fetchone()
+            
+            if existing:
+                dept_id = existing[0]
+            else:
+                parent_id = dept_map.get(parent_name) if parent_name else None
+                cursor.execute(adapt_query('''
+                    INSERT INTO departments (name, leader_position, parent_id, display_order)
+                    VALUES (?, ?, ?, ?)
+                '''), (dept_name, leader_position, parent_id, idx))
+                if is_postgresql():
+                    cursor.execute('SELECT LASTVAL()')
+                    dept_id = cursor.fetchone()[0]
+                else:
+                    dept_id = cursor.lastrowid
+            
+            dept_map[dept_name] = dept_id
+        
+        commit_db(conn)
+        conn.close()
+        
+        return jsonify({'success': True, 'message': f'{len(df)}개의 조직이 등록되었습니다.'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/organization/all_employees', methods=['GET'])
+def get_all_employees():
+    """모든 직원 목록 조회 (조직 배정되지 않은 직원 포함)"""
+    try:
+        backdata = load_backdata()
+        if backdata is None or backdata.empty:
+            return jsonify({'success': True, 'employees': []})
+        
+        # 이미 배정된 직원 ID 조회
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(adapt_query('SELECT DISTINCT employee_id FROM department_employees'))
+        assigned_ids = set(str(row[0]) for row in cursor.fetchall())
+        conn.close()
+        
+        employees = []
+        for idx, row in backdata.iterrows():
+            emp_id = str(row.iloc[0])
+            employees.append({
+                'id': emp_id,
+                'name': str(row.iloc[2]),
+                'team': str(row.iloc[3]),
+                'position': str(row.iloc[4]),
+                'grade': str(row.iloc[5]),
+                'assigned': emp_id in assigned_ids
+            })
+        
+        return jsonify({'success': True, 'employees': employees})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     # 서버를 먼저 시작하여 헬스체크가 즉시 응답하도록 하고,
