@@ -6,16 +6,51 @@ from datetime import datetime
 import sqlite3
 import io
 
-# Heroku PostgreSQL 지원
 try:
     import psycopg2
     from psycopg2.extras import RealDictCursor
-    HEROKU_MODE = True
+    PSYCOPG2_AVAILABLE = True
 except ImportError:
-    HEROKU_MODE = False
+    psycopg2 = None
+    PSYCOPG2_AVAILABLE = False
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+
+
+def get_database_url():
+    """Postgres 연결 URL. 있으면 실적/평가는 재배포 후에도 유지된다."""
+    url = os.environ.get('DATABASE_URL', '').strip()
+    return url or None
+
+
+def is_postgresql():
+    """PostgreSQL 사용 여부"""
+    return get_database_url() is not None
+
+
+def get_db_connection():
+    """Railway/프로덕션은 PostgreSQL, 로컬만 SQLite."""
+    database_url = get_database_url()
+    if database_url:
+        if not PSYCOPG2_AVAILABLE:
+            raise RuntimeError('DATABASE_URL이 설정되어 있지만 psycopg2가 설치되지 않았습니다.')
+        # libpq는 postgres:// 를 받는다
+        if database_url.startswith('postgresql://'):
+            database_url = database_url.replace('postgresql://', 'postgres://', 1)
+        conn = psycopg2.connect(database_url)
+        try:
+            conn.autocommit = True
+        except Exception:
+            pass
+        return conn
+
+    if os.environ.get('RAILWAY_ENVIRONMENT'):
+        raise RuntimeError(
+            'Railway에서는 DATABASE_URL(Postgres)이 필요합니다. '
+            'SQLite를 쓰면 재배포 시 실적/평가 데이터가 사라집니다.'
+        )
+    return sqlite3.connect('evaluation.db')
 
 def get_excluded_evaluatee_ids():
     """환경변수 EXCLUDED_EVALUATEE_IDS(콤마 구분)에서 제외할 피평가자 ID 집합을 반환"""
@@ -49,28 +84,6 @@ def get_excluded_evaluatee_names():
         if name:
             excluded_names.add(name)
     return excluded_names
-
-def get_db_connection():
-    """데이터베이스 연결 (Railway PostgreSQL 또는 로컬 SQLite)"""
-    if HEROKU_MODE and os.environ.get('DATABASE_URL'):
-        # Railway PostgreSQL
-        DATABASE_URL = os.environ.get('DATABASE_URL')
-        if DATABASE_URL.startswith('postgres://'):
-            DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
-        conn = psycopg2.connect(DATABASE_URL)
-        # Postgres에서는 DDL이 반영되도록 autocommit 활성화
-        try:
-            conn.autocommit = True
-        except Exception:
-            pass
-        return conn
-    else:
-        # 로컬 SQLite
-        return sqlite3.connect('evaluation.db')
-
-def is_postgresql():
-    """PostgreSQL 사용 여부 확인"""
-    return HEROKU_MODE and os.environ.get('DATABASE_URL')
 
 def adapt_query(query: str) -> str:
     """DB 드라이버별 플레이스홀더 변환.
@@ -111,19 +124,12 @@ def _ensure_db_initialized():
         try:
             init_db()
             _db_initialized = True
-            print("Database initialized successfully")
+            backend = 'postgres' if is_postgresql() else 'sqlite'
+            print(f"Database initialized successfully ({backend})")
         except Exception as e:
             # 초기화 실패 시에도 앱이 죽지 않도록 로그만 남김
             print(f"DB init error: {e}")
             _db_initialized = True  # 실패해도 재시도 방지
-
-# 앱 로드 시 DB 초기화 시도 (Gunicorn preload 시에도 작동)
-# 하지만 실패해도 앱은 시작되도록 함
-try:
-    safe_init_db()
-    print("Database pre-initialized on app load")
-except Exception as e:
-    print(f"Pre-init DB error (will retry on first request): {e}")
 
 # 데이터 로드 함수들
 def load_backdata():
@@ -230,7 +236,7 @@ def init_db():
     """데이터베이스 초기화 (PostgreSQL 또는 SQLite)"""
     conn = get_db_connection()
     
-    if HEROKU_MODE and os.environ.get('DATABASE_URL'):
+    if is_postgresql():
         # PostgreSQL
         cursor = conn.cursor()
         
@@ -1192,7 +1198,8 @@ def reset_performance(employee_id):
 @app.route('/health')
 def health_check():
     """Railway 헬스체크용 엔드포인트"""
-    return 'OK', 200
+    backend = 'postgres' if is_postgresql() else 'sqlite'
+    return f'OK {backend}', 200
 
 # 간단한 진단용 엔드포인트: 배포 환경에서 backdata 내용 확인
 @app.route('/debug/backdata_find')
