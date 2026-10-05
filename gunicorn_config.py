@@ -6,7 +6,8 @@ bind = f"0.0.0.0:{os.environ.get('PORT', '5000')}"
 backlog = 2048
 
 # Worker processes
-workers = 2
+# SQLite is not safe with multiple workers; use 1 unless PostgreSQL is configured.
+workers = 2 if os.environ.get("DATABASE_URL") else 1
 worker_class = "sync"
 worker_connections = 1000
 timeout = 120
