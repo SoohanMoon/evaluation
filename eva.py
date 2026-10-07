@@ -16,6 +16,15 @@ except ImportError:
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
+COMMENT_MAX_LENGTH = 1300
+
+
+def normalize_comments(comments):
+    """평가 의견을 문자열로 정규화한다. 1300자를 넘으면 None."""
+    text = '' if comments is None else str(comments)
+    if len(text) > COMMENT_MAX_LENGTH:
+        return None
+    return text
 
 
 def get_database_url():
@@ -837,7 +846,9 @@ def submit_evaluation():
     evaluatee_id = data['evaluatee_id']
     evaluation_type = data['evaluation_type']
     scores = data.get('scores', {})
-    comments = data.get('comments', '')
+    comments = normalize_comments(data.get('comments', ''))
+    if comments is None:
+        return jsonify({'success': False, 'message': f'평가 의견은 {COMMENT_MAX_LENGTH}자까지 입력할 수 있습니다.'})
     
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -889,7 +900,10 @@ def submit_evaluations_bulk():
     for item in evaluations:
         evaluatee_id = item.get('evaluatee_id')
         scores = item.get('scores', {})
-        comments = item.get('comments', '')
+        comments = normalize_comments(item.get('comments', ''))
+        if comments is None:
+            conn.close()
+            return jsonify({'success': False, 'message': f'평가 의견은 {COMMENT_MAX_LENGTH}자까지 입력할 수 있습니다.'})
         if not evaluatee_id:
             continue
         
