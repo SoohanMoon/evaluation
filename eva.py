@@ -755,27 +755,33 @@ def evaluate(evaluation_type):
                 
                 # 평가자(임원)의 팀원 평가(관리직)인 경우, 팀장 평가 점수를 가져오기
                 if session['user_type'] == "평가자(임원)" and evaluation_type == "manager":
-                    # 팀장의 평가자 ID들 (평가자(팀장)_대리이상.csv에서 가져온 ID들)
-                    team_leader_ids = [11050121, 11980036, 11040086, 11080043, 11040050, 11010060]
-                    
-                    # 데이터베이스에서 팀장이 해당 직원에 대해 manager 평가 타입으로 제출한 점수 조회
-                    conn = get_db_connection()
-                    cursor = conn.cursor()
-                    cursor.execute(adapt_query('''
-                        SELECT scores FROM evaluation_data 
-                        WHERE evaluatee_id = ? AND evaluation_type = 'manager' 
-                        AND evaluator_id IN ({})
-                        ORDER BY created_at DESC LIMIT 1
-                    '''.format(','.join(map(str, team_leader_ids)))), (evaluatee_id,))
-                    result = cursor.fetchone()
-                    commit_db(conn)
-                    conn.close()
-                    
-                    if result:
+                    team_leader_ids = (
+                        mappings['team_leader_manager'].iloc[:, 0].astype(str).unique().tolist()
+                        if mappings.get('team_leader_manager') is not None and not mappings['team_leader_manager'].empty
+                        else []
+                    )
+                    if team_leader_ids:
                         try:
-                            scores_data = json.loads(result[0])
-                            before_point = scores_data.get('score', 0)
-                        except:
+                            conn = get_db_connection()
+                            cursor = conn.cursor()
+                            placeholders = ','.join(['?'] * len(team_leader_ids))
+                            cursor.execute(adapt_query(f'''
+                                SELECT scores FROM evaluation_data
+                                WHERE evaluatee_id = ? AND evaluation_type = 'manager'
+                                AND evaluator_id IN ({placeholders})
+                                ORDER BY created_at DESC LIMIT 1
+                            '''), (str(evaluatee_id), *team_leader_ids))
+                            result = cursor.fetchone()
+                            commit_db(conn)
+                            conn.close()
+                            if result:
+                                try:
+                                    scores_data = json.loads(result[0])
+                                    before_point = scores_data.get('score', 0)
+                                except Exception:
+                                    before_point = 0
+                        except Exception as e:
+                            print(f"before_point lookup error for {evaluatee_id}: {e}")
                             before_point = 0
                 else:
                     # 기존 방식: backdata의 I열에서 직전 점수 가져오기
